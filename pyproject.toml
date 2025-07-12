@@ -22,6 +22,7 @@ dependencies = [
   "pynput>=1.8",
   # predictive text
   "wordfreq>=3.1",
+  "appdirs>=1.4",
 ]
 
 # ---------- Optional groups ----------
