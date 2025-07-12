@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import font
+from tkinter import font, ttk
 from types import SimpleNamespace
 from typing import Callable
 
@@ -7,6 +7,7 @@ from .kb_layout import Key, Keyboard
 from .key_types import Action
 from .modifier_state import ModifierState
 from .predictive import Predictor, default_predictor
+from . import config
 
 
 class VirtualKeyboard:
@@ -32,16 +33,40 @@ class VirtualKeyboard:
         self.row_indices: list[int] = []
         self.current_word: str = ""
 
+        self.cfg = config.load()
+
         self.root = tk.Tk()
         self.root.title("Virtual Keyboard")
+
+        # high-contrast style and larger fonts
+        default_font = font.nametofont("TkDefaultFont")
+        default_font.configure(size=24, weight="bold")
+        style = ttk.Style(self.root)
+        style.configure(".", background="#000000", foreground="#FFFFFF")
+        style.configure("Accent.TButton", background="#FFD700")
+        self.root.configure(bg="#000000")
+
         try:
             # Keep the window floating above others but allow resizing and
             # decoration so users can manipulate the window size.
-            self.root.attributes("-topmost", True)
             self.root.attributes("-alpha", 0.93)
+            atop = bool(self.cfg.get("always_on_top", False))
+            self.root.attributes("-topmost", atop)
         except tk.TclError:
             # Attributes may fail on some platforms (e.g. dummy Tk during tests).
             pass
+
+        # menu with Always on Top option
+        menubar = tk.Menu(self.root)
+        view = tk.Menu(menubar, tearoff=0)
+        self.always_var = tk.BooleanVar(master=self.root, value=self.cfg.get("always_on_top", False))
+        view.add_checkbutton(
+            label="Always on Top",
+            variable=self.always_var,
+            command=self._toggle_always_on_top,
+        )
+        menubar.add_cascade(label="View", menu=view)
+        self.root.config(menu=menubar)
 
         self.root.resizable(True, True)
 
@@ -190,12 +215,20 @@ class VirtualKeyboard:
                     text=key.label,
                     relief=tk.RAISED,
                     bd=2,
-                    padx=2,
-                    pady=2,
+                    padx=8,
+                    pady=8,
                     bg=self._bg_for_key(key),
                     font=self.font,
                 )
-                lbl.grid(row=0, column=c_idx, sticky="nsew")
+                lbl.grid(
+                    row=0,
+                    column=c_idx,
+                    sticky="nsew",
+                    padx=8,
+                    pady=8,
+                    ipadx=10,
+                    ipady=10,
+                )
                 row_frame.grid_columnconfigure(c_idx, weight=int(stretch_ratio * 100))
                 self.key_widgets.append((lbl, key))
                 self.row_indices.append(r_idx)
@@ -205,6 +238,15 @@ class VirtualKeyboard:
         self.highlight_row_index = None
         self._update_highlight()
         self._update_predictions()
+
+    def _toggle_always_on_top(self) -> None:
+        flag = bool(self.always_var.get())
+        try:
+            self.root.attributes("-topmost", flag)
+        except tk.TclError:
+            pass
+        self.cfg["always_on_top"] = flag
+        config.save(self.cfg)
 
     def _update_highlight(self):
         for idx, (widget, key) in enumerate(self.key_widgets):
