@@ -1,6 +1,9 @@
 from dataclasses import dataclass, asdict
 import json
 import os
+from pathlib import Path
+
+from appdirs import user_config_dir
 import tkinter as tk
 from tkinter import messagebox
 
@@ -21,11 +24,11 @@ class DetectorConfig:
     device: str | None = None
 
 
-CONFIG_DIR = os.path.join(os.path.expanduser("~"), ".switch_interface")
-CONFIG_FILE = os.path.join(CONFIG_DIR, "detector.json")
+CONFIG_DIR = Path(user_config_dir("switch_interface"))
+CONFIG_FILE = CONFIG_DIR / "calibration.json"
 
 
-def load_config(path: str = CONFIG_FILE) -> "DetectorConfig":
+def load_config(path: str | Path = CONFIG_FILE) -> "DetectorConfig":
     """Return saved detector settings or defaults if unavailable."""
     try:
         with open(path, "r", encoding="utf-8") as f:
@@ -35,9 +38,9 @@ def load_config(path: str = CONFIG_FILE) -> "DetectorConfig":
         return DetectorConfig()
 
 
-def save_config(config: "DetectorConfig", path: str = CONFIG_FILE) -> None:
+def save_config(config: "DetectorConfig", path: str | Path = CONFIG_FILE) -> None:
     """Persist ``config`` to ``path`` in JSON format."""
-    os.makedirs(os.path.dirname(path), exist_ok=True)
+    os.makedirs(Path(path).parent, exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
         json.dump(asdict(config), f)
 
@@ -262,3 +265,25 @@ def calibrate(config: DetectorConfig | None = None) -> DetectorConfig:
 
     assert result is not None
     return result
+
+
+def run_auto_calibration(device_id: int | str | None = None) -> dict:
+    """Record a short sample from ``device_id`` and return calibration settings."""
+    duration = 3
+    samplerate = 44_100
+    blocksize = 256
+    stream = sd.rec(int(duration * samplerate), samplerate=samplerate, channels=1,
+                    dtype="float32", device=device_id)
+    sd.wait()
+    samples = stream.reshape(-1)
+    from .auto_calibration import calibrate
+
+    res = calibrate(samples, samplerate)
+    return {
+        "upper_offset": res.upper_offset,
+        "lower_offset": res.lower_offset,
+        "debounce_ms": res.debounce_ms,
+        "samplerate": samplerate,
+        "blocksize": blocksize,
+        "device": device_id,
+    }
