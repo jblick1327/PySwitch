@@ -42,8 +42,8 @@ dev = [
 
 # ---------- Console & GUI entry points ----------
 [project.scripts]
-switch-interface      = "switch_interface.__main__:cli"
-switch-interface-gui  = "switch_interface.__main__:gui"
+switch-interface     = "switch_interface.main:main"
+switch-interface-cli = "switch_interface.__main__:main"
 
 # ---------- Pytest config (keeps repo root clean) ----------
 [tool.pytest.ini_options]
