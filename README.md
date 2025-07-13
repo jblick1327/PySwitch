@@ -58,7 +58,8 @@ the calibration menu where you can choose an input device from a dropdown.
 <!-- TODO: add wizard GIF here -->
 
 On Windows the microphone is opened in WASAPI exclusive mode when possible. If
-exclusive access fails, the program falls back to the default shared mode.
+exclusive access fails, the program falls back to the default shared mode. Set
+the `SWITCH_EXCLUSIVEMODE` environment variable to `0` to force shared mode.
 
 ### Layout files
 

@@ -12,6 +12,7 @@ import os
 import subprocess
 import sys
 import threading
+import logging
 from pathlib import Path
 from queue import Empty, SimpleQueue
 
@@ -69,14 +70,27 @@ def main(argv: list[str] | None = None) -> None:
         cfg = calibrate(cfg)
         save_config(cfg)
 
-    try:
-        check_device(
-            samplerate=cfg.samplerate,
-            blocksize=cfg.blocksize,
-            device=cfg.device,
+    ready = threading.Event()
+
+    def _verify() -> None:
+        try:
+            check_device(
+                samplerate=cfg.samplerate,
+                blocksize=cfg.blocksize,
+                device=cfg.device,
+            )
+        except Exception as e:  # pragma: no cover - just logs
+            logging.warning(
+                "Audio check failed: %s \u2013 continuing in shared mode", e
+            )
+        finally:
+            ready.set()
+
+    threading.Thread(target=_verify, daemon=True).start()
+    if not ready.wait(2.0):
+        logging.warning(
+            "Audio device check timed out \u2013 proceeding without exclusive access"
         )
-    except RuntimeError as exc:
-        raise RuntimeError("Could not open audio input device") from exc
 
     pc_controller = PCController()
     try:
