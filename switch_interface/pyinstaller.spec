@@ -4,7 +4,9 @@ block_cipher = None
 a = Analysis(
     ['switch_interface/__main__.py'],
     hiddenimports=[],
-    datas=[('switch_interface/resources/layouts', 'switch_interface/resources/layouts')],
+    datas=[
+        ('switch_interface/resources/layouts', 'switch_interface/resources/layouts'),
+    ],
     strip=False,
     upx=True,
 )
@@ -12,10 +14,11 @@ pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 exe = EXE(
     pyz,
     a.scripts,
-    name='SwitchInterface',
+    name='switch-interface',
     dest='dist',
     icon=None,
     debug=False,
     strip=False,
+    upx=True,
     console=False,
 )

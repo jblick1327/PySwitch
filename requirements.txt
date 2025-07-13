@@ -1,0 +1,5 @@
+sounddevice>=0.5
+numpy>=2.0
+pynput>=1.8
+wordfreq>=3.1
+appdirs>=1.4

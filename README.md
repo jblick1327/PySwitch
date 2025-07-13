@@ -1,39 +1,28 @@
 # Switch Interface
 
 Switch Interface is a lightweight and simple scanning keyboard for one-switch input. It highlights keys on a virtual keyboard while listening to microphone input to detect switch presses. Predictive word and letter suggestions speed up typing.
+<!-- TODO: add keyboard screenshot here -->
 
 ## Requirements
 
 - Python 3.11 or newer
 - Runtime dependencies (`pynput` and `wordfreq`) are installed automatically via `pip install -e .`.
 
-## Installation
+## Download
+
+Download the latest `switch-interface.exe` from the [Releases](https://github.com/jblick1327/switch_interface/releases) page and run it directly. No additional installation is required.
+
+### Development
+
+Install the project in editable mode if you want to run from source:
 
 ```bash
 pip install -e .
 ```
 
-## Usage
-
-Launch the graphical interface:
-
-```bash
-switch-interface
-```
-
-Command line usage is still available via:
-
-```bash
-switch-interface-cli --layout switch_interface/resources/layouts/pred_test.json
-```
-
-The CLI also accepts optional flags:
-
-- `--dwell SECONDS` — how long each key remains highlighted (default: 0.6).
-- `--row-column` — use row/column scanning instead of linear scanning.
-
 If no microphone is detected when launching the GUI, an error will direct you to
 the calibration menu where you can choose an input device from a dropdown.
+<!-- TODO: add wizard GIF here -->
 
 On Windows the microphone is opened in WASAPI exclusive mode when possible. If
 exclusive access fails, the program falls back to the default shared mode.
@@ -57,3 +46,7 @@ Run the unit tests after installing the project:
 ```bash
 pytest
 ```
+
+## Contributing
+
+**TODO**: Replace the placeholder GIF/PNG in `docs/` with real media before opening a PR.
