@@ -6,7 +6,25 @@ Switch Interface is a lightweight and simple scanning keyboard for one-switch in
 ## Requirements
 
 - Python 3.11 or newer
-- Runtime dependencies (`pynput` and `wordfreq`) are installed automatically via `pip install -e .`.
+- Runtime dependencies are installed automatically via `pip install -e .`.
+
+## Getting Started
+
+Clone the repository and install the dependencies in editable mode:
+
+```bash
+git clone https://github.com/jblick1327/switch_interface.git
+cd switch_interface
+pip install -e .[dev]
+```
+
+Launch the on-screen keyboard with the default layout:
+
+```bash
+switch-interface
+```
+
+Press `Ctrl+C` in the console or close the window to exit.
 
 ## Download
 
