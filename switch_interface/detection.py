@@ -116,8 +116,10 @@ if __name__ == "__main__":
         presscount += 1
         print(f"{ts}  PRESS. (count: {presscount})")
 
+    from . import compat
+
     print("Listening…  (Ctrl‑C to stop)")
-    listen(
+    compat.listen(
         _on_press,
         upper_offset=upper_offset,
         lower_offset=lower_offset,
