@@ -1,12 +1,14 @@
 import importlib
 import sys
 import types
+
 import pytest
 
 
 def _reload_with_dummy_sd(monkeypatch, sd_mod):
     monkeypatch.setitem(sys.modules, "sounddevice", sd_mod)
     import switch_interface.audio.backends.wasapi as wasapi
+
     importlib.reload(wasapi)
     return wasapi
 
@@ -65,9 +67,12 @@ def test_listen_retries_shared_mode(monkeypatch):
 
     wasapi = _reload_with_dummy_sd(monkeypatch, sd_mod)
     import switch_interface.detection as detection
+
     importlib.reload(detection)
 
-    monkeypatch.setattr(detection.time, "sleep", lambda _: (_ for _ in ()).throw(KeyboardInterrupt))
+    monkeypatch.setattr(
+        detection.time, "sleep", lambda _: (_ for _ in ()).throw(KeyboardInterrupt)
+    )
 
     detection.listen(lambda: None, samplerate=1, blocksize=1)
 
@@ -100,9 +105,12 @@ def test_listen_raises_runtime_error(monkeypatch):
 
     wasapi = _reload_with_dummy_sd(monkeypatch, sd_mod)
     import switch_interface.detection as detection
+
     importlib.reload(detection)
 
-    monkeypatch.setattr(detection.time, "sleep", lambda _: (_ for _ in ()).throw(KeyboardInterrupt))
+    monkeypatch.setattr(
+        detection.time, "sleep", lambda _: (_ for _ in ()).throw(KeyboardInterrupt)
+    )
 
     with pytest.raises(RuntimeError):
         detection.listen(lambda: None, samplerate=1, blocksize=1)

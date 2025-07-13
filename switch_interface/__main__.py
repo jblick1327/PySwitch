@@ -7,21 +7,20 @@ from switch_interface.logging import setup as _setup_logging
 _setup_logging()
 
 import argparse
+import json
+import os
+import subprocess
+import sys
 import threading
+from pathlib import Path
 from queue import Empty, SimpleQueue
 
-import json
-from .detection import listen, check_device
-from .calibration import calibrate, DetectorConfig, load_config, save_config
+from .calibration import DetectorConfig, calibrate, load_config, save_config
+from .detection import check_device, listen
 from .kb_gui import VirtualKeyboard
 from .kb_layout_io import load_keyboard
 from .pc_control import PCController
 from .scan_engine import Scanner
-
-from pathlib import Path
-import os
-import subprocess
-import sys
 
 _LOG_PATH = Path.home() / ".switch_interface.log"
 
@@ -88,7 +87,7 @@ def main(argv: list[str] | None = None) -> None:
 
     vk = VirtualKeyboard(
         keyboard, on_key=pc_controller.on_key, state=pc_controller.state
-        )
+    )
 
     scanner = Scanner(vk, dwell=args.dwell, row_column_scan=args.row_column)
     scanner.start()

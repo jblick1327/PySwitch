@@ -6,7 +6,6 @@ import logging
 import sys
 from pathlib import Path
 
-
 _DEFAULT_LOG = Path.home() / ".switch_interface.log"
 
 
@@ -48,4 +47,3 @@ def setup(level: int = logging.INFO, log_file: str | Path | None = None) -> None
         )
 
     sys.excepthook = _excepthook
-

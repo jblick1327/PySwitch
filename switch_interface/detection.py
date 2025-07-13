@@ -5,9 +5,9 @@ import time
 from dataclasses import dataclass
 from typing import Callable, Optional, Tuple
 
-from .audio.backends.wasapi import get_extra_settings
-
 import numpy as np
+
+from .audio.backends.wasapi import get_extra_settings
 
 
 @dataclass
@@ -51,7 +51,7 @@ def detect_edges(
         if cooldown >= len(block):
             cooldown -= len(block)
         else:
-            offset = cooldown                    # cooldown just expired
+            offset = cooldown  # cooldown just expired
             # re-arm ONLY if the signal has risen back above dyn_upper
             if samples[offset] >= dyn_upper:
                 armed = True
@@ -179,13 +179,9 @@ def listen(
             try:
                 _run(stream_kwargs)
             except sd.PortAudioError as exc2:
-                raise RuntimeError(
-                    "Failed to open audio input device"
-                ) from exc2
+                raise RuntimeError("Failed to open audio input device") from exc2
         else:
-            raise RuntimeError(
-                "Failed to open audio input device"
-            ) from exc
+            raise RuntimeError("Failed to open audio input device") from exc
 
 
 if __name__ == "__main__":

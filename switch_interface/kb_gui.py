@@ -1,14 +1,13 @@
 import tkinter as tk
-from tkinter import font
-from tkinter import ttk
+from tkinter import font, ttk
 from types import SimpleNamespace
 from typing import Callable
 
+from . import config
 from .kb_layout import Key, Keyboard
 from .key_types import Action
 from .modifier_state import ModifierState
 from .predictive import Predictor, default_predictor
-from . import config
 
 
 class VirtualKeyboard:
@@ -60,7 +59,9 @@ class VirtualKeyboard:
         # menu with Always on Top option
         menubar = tk.Menu(self.root)
         view = tk.Menu(menubar, tearoff=0)
-        self.always_var = tk.BooleanVar(master=self.root, value=self.cfg.get("always_on_top", False))
+        self.always_var = tk.BooleanVar(
+            master=self.root, value=self.cfg.get("always_on_top", False)
+        )
         view.add_checkbutton(
             label="Always on Top",
             variable=self.always_var,
@@ -206,7 +207,9 @@ class VirtualKeyboard:
             row_frame.grid_rowconfigure(0, weight=1)
             self.row_start_indices.append(index)
 
-            stretch_ratio = max_len / len(row) if row.stretch and len(row) < max_len else 1
+            stretch_ratio = (
+                max_len / len(row) if row.stretch and len(row) < max_len else 1
+            )
 
             for c_idx, key in enumerate(row):
                 lbl = tk.Label(

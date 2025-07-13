@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import threading
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import messagebox, ttk
 from typing import Literal
 
 import sounddevice as sd
 
-from . import config, calibration
+from . import calibration, config
 
 
 class FirstRunWizard(tk.Toplevel):
@@ -64,7 +64,9 @@ class FirstRunWizard(tk.Toplevel):
         frame = tk.Frame(self)
         tk.Label(frame, text="Select audio device").pack(pady=(0, 5))
         devices = [
-            (i, d["name"]) for i, d in enumerate(sd.query_devices()) if d.get("max_input_channels", 0) > 0
+            (i, d["name"])
+            for i, d in enumerate(sd.query_devices())
+            if d.get("max_input_channels", 0) > 0
         ]
         if not devices:
             self.device_var.set("")
@@ -82,7 +84,9 @@ class FirstRunWizard(tk.Toplevel):
             next_state: Literal["normal", "active", "disabled"] = tk.DISABLED
         else:
             next_state = tk.NORMAL
-        tk.Button(frame, text="Next", command=lambda: self._show_step(1), state=next_state).pack(pady=5)
+        tk.Button(
+            frame, text="Next", command=lambda: self._show_step(1), state=next_state
+        ).pack(pady=5)
         if not devices:
             tk.Button(frame, text="Close", command=self._on_close).pack(pady=5)
         self._device_map = {name: idx for idx, name in devices}
@@ -120,7 +124,9 @@ class FirstRunWizard(tk.Toplevel):
         self.progress = progress
         tk.Button(frame, text="Start", command=self._start_calibration).pack()
         tk.Label(frame, textvariable=self.status_var).pack(pady=5)
-        self.next_btn = tk.Button(frame, text="Next", command=lambda: self._show_step(2), state=tk.DISABLED)
+        self.next_btn = tk.Button(
+            frame, text="Next", command=lambda: self._show_step(2), state=tk.DISABLED
+        )
         self.next_btn.pack(pady=5)
         return frame
 
@@ -134,7 +140,9 @@ class FirstRunWizard(tk.Toplevel):
             ("Fast (250 ms)", "fast"),
         ]
         for lbl, val in opts:
-            tk.Radiobutton(frame, text=lbl, value=val, variable=self.preset_var).pack(anchor=tk.W)
+            tk.Radiobutton(frame, text=lbl, value=val, variable=self.preset_var).pack(
+                anchor=tk.W
+            )
         tk.Button(frame, text="Finish", command=self._finish).pack(pady=5)
         return frame
 

@@ -1,4 +1,6 @@
-from pynput.keyboard import Key as OSKey, Controller
+from pynput.keyboard import Controller
+from pynput.keyboard import Key as OSKey
+
 from .interfaces import KeyReceiver
 from .key_types import Action
 from .modifier_state import ModifierState
@@ -7,7 +9,9 @@ from .modifier_state import ModifierState
 class PCController(KeyReceiver):
     """Translate :class:`~switch_interface.kb_gui.Key` objects into OS key events."""
 
-    def __init__(self, kb: Controller | None = None, state: ModifierState | None = None) -> None:
+    def __init__(
+        self, kb: Controller | None = None, state: ModifierState | None = None
+    ) -> None:
         self.kb = kb or Controller()
         # single source of truth for modifier state
         self.state = state or ModifierState()
