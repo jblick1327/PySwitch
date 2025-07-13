@@ -40,6 +40,10 @@ class FirstRunWizard(tk.Toplevel):
             f"+{root.winfo_screenheight()//3 - self.winfo_height()//2}"
         )
 
+    def show_modal(self) -> None:
+        """Block until the wizard window is closed."""
+        self.wait_window(self)
+
     # ---------- helpers ----------
     def _build_steps(self) -> None:
         self.steps = [
@@ -141,9 +145,10 @@ class FirstRunWizard(tk.Toplevel):
             "device": device,
             "scan_interval": config.get_scan_interval(self.preset_var.get()),
             "calibration": self.calib_data,
+            "calibration_complete": True,
         }
         try:
-            config.save(cfg)
+            config.save_settings(cfg)
             if self.calib_data is not None:
                 calib_cfg = calibration.DetectorConfig(
                     upper_offset=self.calib_data["upper_offset"],
