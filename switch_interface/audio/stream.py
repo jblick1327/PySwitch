@@ -6,6 +6,7 @@ import importlib
 import inspect
 import logging
 from pathlib import Path
+from threading import Lock
 from types import ModuleType
 from typing import Any, Callable, Iterator, Optional
 
@@ -47,41 +48,43 @@ class InputBackend(abc.ABC):
 
 _BACKENDS: list[InputBackend] = []
 _BACKENDS_LOADED = False
+_BACKENDS_LOCK = Lock()
 
 
 def _discover_backends() -> None:
 
     global _BACKENDS_LOADED
-    if _BACKENDS_LOADED:
-        return
+    with _BACKENDS_LOCK:
+        if _BACKENDS_LOADED:
+            return
 
-    _BACKENDS.clear()
+        _BACKENDS.clear()
 
-    backends_dir = Path(__file__).parent / "backends"
-    for file in backends_dir.glob("*.py"):
-        if file.stem == "__init__":
-            continue
-        module_name = f"{__package__}.backends.{file.stem}"
-        try:
-            mod: ModuleType = importlib.import_module(module_name)
-        except Exception as exc:
-            log.debug("Backend %s skipped (%s)", module_name, exc)
-            continue
+        backends_dir = Path(__file__).parent / "backends"
+        for file in backends_dir.glob("*.py"):
+            if file.stem == "__init__":
+                continue
+            module_name = f"{__package__}.backends.{file.stem}"
+            try:
+                mod: ModuleType = importlib.import_module(module_name)
+            except Exception as exc:
+                log.debug("Backend %s skipped (%s)", module_name, exc)
+                continue
 
-        for name, cls in inspect.getmembers(mod, inspect.isclass):
-            if issubclass(cls, InputBackend) and cls is not InputBackend:
-                try:
-                    _BACKENDS.append(cls())
-                except Exception:
-                    log.debug("Backend %s failed to initialize", cls.__name__)
+            for name, cls in inspect.getmembers(mod, inspect.isclass):
+                if issubclass(cls, InputBackend) and cls is not InputBackend:
+                    try:
+                        _BACKENDS.append(cls())
+                    except Exception:
+                        log.debug("Backend %s failed to initialize", cls.__name__)
 
-    _BACKENDS_LOADED = True
-    _BACKENDS.sort(key=lambda b: b.priority, reverse=True)
-    log.debug(
-        "Found %d functional audio back-ends: %s",
-        len(_BACKENDS),
-        _BACKENDS,
-    )
+        _BACKENDS_LOADED = True
+        _BACKENDS.sort(key=lambda b: b.priority, reverse=True)
+        log.debug(
+            "Found %d functional audio back-ends: %s",
+            len(_BACKENDS),
+            _BACKENDS,
+        )
 
 
 def _select_backend(device: int | str | None) -> InputBackend:
@@ -157,7 +160,8 @@ def open_input(
 
 def rescan_backends() -> None:
     global _BACKENDS_LOADED
-    _BACKENDS_LOADED = False
-    _BACKENDS.clear()
+    with _BACKENDS_LOCK:
+        _BACKENDS_LOADED = False
+        _BACKENDS.clear()
     _discover_backends()
     log.debug("Re-scanning backends")

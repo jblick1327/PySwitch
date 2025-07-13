@@ -1,8 +1,7 @@
 scipy
 pyinstaller
-pytest
+pytest>=6.2
+pytest-cov>=4.1
 ruff
 mypy
-
-pytest-cov
 pipdeptree
