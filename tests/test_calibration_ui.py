@@ -154,6 +154,9 @@ def _setup_dummy_sd(monkeypatch):
         def close(self):
             pass
 
+    def check_input_settings(device=None, samplerate=None, blocksize=None, **kw):
+        return None
+
     sd_mod = types.SimpleNamespace(
         InputStream=lambda **kw: DummyStream(**kw),
         PortAudioError=Exception,
@@ -161,7 +164,7 @@ def _setup_dummy_sd(monkeypatch):
             {"name": "Mic1", "max_input_channels": 1},
             {"name": "Mic2", "max_input_channels": 1},
         ],
-        check_input_settings=lambda **kw: None,
+        check_input_settings=check_input_settings,
     )
     monkeypatch.setitem(sys.modules, "sounddevice", sd_mod)
     return calls
@@ -180,4 +183,78 @@ def test_calibrate_canvas_and_stream(monkeypatch):
     res = calibration.calibrate(calibration.DetectorConfig())
     assert isinstance(res, calibration.DetectorConfig)
     assert DummyTk.instance.canvas is not None
+    assert len(calls) == 1
+
+
+def test_sample_rates_filtered(monkeypatch):
+    DummyTk = _setup_dummy_tk(monkeypatch)
+    calls = _setup_dummy_sd(monkeypatch)
+
+    tk_mod = sys.modules["tkinter"]
+    orig_menu = tk_mod.OptionMenu
+
+    captured: list[tuple] = []
+
+    class CaptureMenu(orig_menu):
+        def __init__(self, master=None, var=None, *values):
+            captured.append(values)
+            super().__init__(master, var, *values)
+
+    monkeypatch.setattr(tk_mod, "OptionMenu", CaptureMenu)
+
+    def check_input_settings(device=None, samplerate=None, blocksize=None, **kw):
+        if samplerate in (44100, 48000):
+            return None
+        raise Exception("bad rate")
+
+    sd_mod = sys.modules["sounddevice"]
+    monkeypatch.setattr(sd_mod, "check_input_settings", check_input_settings)
+
+    monkeypatch.setattr(
+        "switch_interface.audio.backends.wasapi.get_extra_settings", lambda: None
+    )
+
+    import switch_interface.calibration as calibration
+
+    importlib.reload(calibration)
+    res = calibration.calibrate(calibration.DetectorConfig())
+    assert isinstance(res, calibration.DetectorConfig)
+    assert {"44100", "48000"} <= set(captured[0])
+    assert len(calls) == 1
+
+
+def test_block_sizes_filtered(monkeypatch):
+    DummyTk = _setup_dummy_tk(monkeypatch)
+    calls = _setup_dummy_sd(monkeypatch)
+
+    tk_mod = sys.modules["tkinter"]
+    orig_menu = tk_mod.OptionMenu
+
+    captured: list[tuple] = []
+
+    class CaptureMenu(orig_menu):
+        def __init__(self, master=None, var=None, *values):
+            captured.append(values)
+            super().__init__(master, var, *values)
+
+    monkeypatch.setattr(tk_mod, "OptionMenu", CaptureMenu)
+
+    def check_input_settings(device=None, samplerate=None, blocksize=None, **kw):
+        if blocksize in (256, 512):
+            return None
+        raise Exception("bad block")
+
+    sd_mod = sys.modules["sounddevice"]
+    monkeypatch.setattr(sd_mod, "check_input_settings", check_input_settings)
+
+    monkeypatch.setattr(
+        "switch_interface.audio.backends.wasapi.get_extra_settings", lambda: None
+    )
+
+    import switch_interface.calibration as calibration
+
+    importlib.reload(calibration)
+    res = calibration.calibrate(calibration.DetectorConfig())
+    assert isinstance(res, calibration.DetectorConfig)
+    assert {"256", "512"} <= set(captured[1])
     assert len(calls) == 1
