@@ -3,6 +3,7 @@ import math
 import os
 import tkinter as tk
 from dataclasses import asdict, dataclass
+from contextlib import suppress
 from pathlib import Path
 from tkinter import messagebox
 
@@ -56,19 +57,49 @@ def calibrate(config: DetectorConfig | None = None) -> DetectorConfig:
     db_var = tk.IntVar(master=root, value=config.debounce_ms)
     dev_var = tk.StringVar(master=root, value=config.device or "")
 
-    # sample rate selection. TODO: add a loop that polls the hardware for each and filter the list
     STANDARD_RATES = [8000, 16000, 22050, 32000, 44100, 48000, 88200, 96000]
+
+    def _supported_rates(device: str | None) -> list[int]:
+        rates: list[int] = []
+        for r in STANDARD_RATES:
+            with suppress(Exception):
+                sd.check_input_settings(device=device, samplerate=r)
+                rates.append(r)
+        return rates
+
+    available_rates = _supported_rates(config.device) or STANDARD_RATES
+
     sr_var = tk.StringVar(master=root, value=str(config.samplerate))
     tk.Label(root, text="Sample rate").pack(padx=10, pady=(10, 0))
-    tk.OptionMenu(root, sr_var, *[str(r) for r in STANDARD_RATES]).pack(
+    tk.OptionMenu(root, sr_var, *[str(r) for r in available_rates]).pack(
         fill=tk.X, padx=10
     )
 
-    # do the same with block size
     STANDARD_BLOCKS = [64, 128, 256, 512, 1024, 2048]
+
+    def _supported_blocks(device: str | None, samplerate: int) -> list[int]:
+        params = dict(device=device, samplerate=samplerate, channels=1, dtype="float32")
+        blocks: list[int] = []
+        for b in STANDARD_BLOCKS:
+            try:
+                sd.check_input_settings(blocksize=b, **params)
+            except TypeError:
+                with suppress(Exception):
+                    sd.InputStream(blocksize=b, **params).close()
+                    blocks.append(b)
+            except Exception:
+                continue
+            else:
+                blocks.append(b)
+        return blocks
+
+    available_blocks = (
+        _supported_blocks(config.device, int(sr_var.get())) or STANDARD_BLOCKS
+    )
+
     bs_var = tk.StringVar(master=root, value=str(config.blocksize))
     tk.Label(root, text="Block size").pack(padx=10, pady=(10, 0))
-    tk.OptionMenu(root, bs_var, *[str(b) for b in STANDARD_BLOCKS]).pack(
+    tk.OptionMenu(root, bs_var, *[str(b) for b in available_blocks]).pack(
         fill=tk.X, padx=10
     )
 
@@ -213,7 +244,6 @@ def calibrate(config: DetectorConfig | None = None) -> DetectorConfig:
             y = HEIGHT / 2 - sample * (HEIGHT / 2)
             points.extend([x, y])
         wave_canvas.create_line(*points, fill="blue", tags="wave")
-        # dynamic threshold lines
         upper = bias + u_var.get()
         lower = bias + l_var.get()
         y_upper = HEIGHT / 2 - upper * (HEIGHT / 2)
