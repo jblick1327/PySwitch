@@ -6,7 +6,22 @@ Switch Interface is a lightweight and simple scanning keyboard for one-switch in
 ## Requirements
 
 - Python 3.11 or newer
-- Runtime dependencies are installed automatically via `pip install -e .`.
+
+## Setup
+
+Install runtime dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+For development (tests and linting) install the additional tools:
+
+```bash
+pip install -r dev-requirements.txt
+```
+
+The CI workflow performs the same two commands before running `ruff`, `mypy`, and `pytest`.
 
 ## Getting Started
 

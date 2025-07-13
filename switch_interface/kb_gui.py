@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import font, ttk
 from types import SimpleNamespace
 from typing import Callable
+import logging
 
 from . import config
 from .kb_layout import Key, Keyboard
@@ -52,9 +53,9 @@ class VirtualKeyboard:
             self.root.attributes("-alpha", 0.93)
             atop = bool(self.cfg.get("always_on_top", False))
             self.root.attributes("-topmost", atop)
-        except tk.TclError:
+        except tk.TclError as e:
             # Attributes may fail on some platforms (e.g. dummy Tk during tests).
-            pass
+            logging.warning("VirtualKeyboard feature unavailable: %s", e)
 
         # menu with Always on Top option
         menubar = tk.Menu(self.root)
@@ -80,9 +81,9 @@ class VirtualKeyboard:
 
         try:
             ttk.Sizegrip(button_frame).pack(side=tk.RIGHT, padx=(0, 5))
-        except Exception:
+        except Exception as e:
             # Sizegrip may not be available or may fail under headless tests.
-            pass
+            logging.warning("VirtualKeyboard feature unavailable: %s", e)
 
         self.font = font.nametofont("TkDefaultFont").copy()
         self.render_page()
@@ -245,8 +246,8 @@ class VirtualKeyboard:
         flag = bool(self.always_var.get())
         try:
             self.root.attributes("-topmost", flag)
-        except tk.TclError:
-            pass
+        except tk.TclError as e:
+            logging.warning("VirtualKeyboard feature unavailable: %s", e)
         self.cfg["always_on_top"] = flag
         config.save(self.cfg)
 

@@ -10,7 +10,7 @@ description     = "Switch-accessible on-screen keyboard with audio-based single-
 readme          = "README.md"
 requires-python = ">=3.11"
 license         = {text = "MIT"}
-authors         = [{name = "Your Name", email = "you@example.com"}]
+authors         = [{name = "James Blick", email = "jblick1327@gmail.com"}]
 keywords        = ["assistive-technology", "switch-access", "scanning", "AAC"]
 
 # ---------- Runtime dependencies ----------
