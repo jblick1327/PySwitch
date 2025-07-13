@@ -23,8 +23,19 @@ class Predictor:
         self.ready = False
         self.thread: threading.Thread | None = None
         self.lock = threading.Lock()
+        self._prefix_index: DefaultDict[str, CounterType[str]] = defaultdict(Counter)
+        self._build_prefix_index()
 
     # ───────── internal helpers ────────────────────────────────────────────
+    def _build_prefix_index(self) -> None:
+        """Index word prefixes up to length 6 for fast fallback lookups."""
+        for word in self.words:
+            w = "".join(c for c in word.lower() if c.isalpha())
+            for i in range(min(len(w) - 1, 6)):
+                prefix = w[: i + 1]
+                next_letter = w[i + 1]
+                self._prefix_index[prefix][next_letter] += 1
+
     def _build_ngrams(self) -> None:
         start_letters: CounterType[str] = Counter()
         bigrams: DefaultDict[str, CounterType[str]] = defaultdict(Counter)
@@ -57,19 +68,21 @@ class Predictor:
 
     def _fallback_letters(self, prefix: str, k: int) -> list[str]:
         cleaned = "".join(c for c in prefix.lower() if c.isalpha())
-
-        counts: Counter[str] = Counter()
         if not cleaned:
             counts = self.fallback_starts
         else:
-            n = len(cleaned)
-            for w in self.words:
-                if w.startswith(cleaned) and len(w) > n:
-                    c = w[n]
-                    if c.isalpha():
-                        counts[c] += 1
-            if not counts:
-                counts = self.fallback_starts
+            prefix_counts = self._prefix_index.get(cleaned)
+            if prefix_counts and len(prefix_counts) > 0:
+                counts = prefix_counts
+            else:
+                n = len(cleaned)
+                temp: Counter[str] = Counter()
+                for w in self.words:
+                    if w.startswith(cleaned) and len(w) > n:
+                        c = w[n]
+                        if c.isalpha():
+                            temp[c] += 1
+                counts = temp if temp else self.fallback_starts
 
         return [c for c, _ in counts.most_common(k)]
 
