@@ -97,32 +97,3 @@ def __getattr__(name: str):
 
 
 
-if __name__ == "__main__":
-    upper_offset = -0.2
-    lower_offset = -0.5  # current sample must drop below this
-    BLOCKSIZE = 256
-    DEBOUNCE_MS = 35
-
-    # If needed, adapt threshold based on proximity to the previous switch. Multiple
-    # valid presses in succession shift the upper and lower thresholds up slightly.
-
-    import datetime as _dt
-
-    presscount = 0
-
-    def _on_press() -> None:
-        global presscount
-        ts = _dt.datetime.now().strftime("%H:%M:%S.%f")[:-3]
-        presscount += 1
-        print(f"{ts}  PRESS. (count: {presscount})")
-
-    from . import compat
-
-    print("Listening…  (Ctrl‑C to stop)")
-    compat.listen(
-        _on_press,
-        upper_offset=upper_offset,
-        lower_offset=lower_offset,
-        blocksize=BLOCKSIZE,
-        debounce_ms=DEBOUNCE_MS,
-    )
