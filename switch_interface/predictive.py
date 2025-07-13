@@ -71,8 +71,10 @@ class Predictor:
         if not cleaned:
             counts = self.fallback_starts
         else:
-            counts = self._prefix_index.get(cleaned)
-            if counts is None or not counts:
+            prefix_counts = self._prefix_index.get(cleaned)
+            if prefix_counts and len(prefix_counts) > 0:
+                counts = prefix_counts
+            else:
                 n = len(cleaned)
                 temp: Counter[str] = Counter()
                 for w in self.words:
