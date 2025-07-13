@@ -28,10 +28,20 @@ def load(path: Path = CONFIG_FILE) -> dict:
         return {}
 
 
+def load_settings(path: Path = CONFIG_FILE) -> dict:
+    """Backward-compatible wrapper for :func:`load`."""
+    return load(path)
+
+
 def save(cfg: dict, path: Path = CONFIG_FILE) -> None:
     os.makedirs(path.parent, exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
         json.dump(cfg, f)
+
+
+def save_settings(cfg: dict, path: Path = CONFIG_FILE) -> None:
+    """Backward-compatible wrapper for :func:`save`."""
+    save(cfg, path)
 
 
 def get_scan_interval(preset: str) -> float:

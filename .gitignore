@@ -5,6 +5,8 @@ __pycache__/
 
 # Packaging/build artifacts
 build/
+!build/build_installer.py
+!build/inno_template.iss
 dist/
 *.egg-info/
 
