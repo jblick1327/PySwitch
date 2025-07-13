@@ -7,9 +7,14 @@ import pytest
 
 def _reload_with_dummy_sd(monkeypatch, sd_mod):
     monkeypatch.setitem(sys.modules, "sounddevice", sd_mod)
+    import switch_interface.audio.stream as stream
     import switch_interface.audio.backends.wasapi as wasapi
+    import switch_interface.listener as listener
 
+    importlib.reload(stream)
     importlib.reload(wasapi)
+    stream.rescan_backends()
+    importlib.reload(listener)
     return wasapi
 
 
@@ -48,14 +53,23 @@ def test_listen_retries_shared_mode(monkeypatch):
             fail["flag"] = False
             raise PortAudioError("fail")
 
-        class _Ctx:
+        class DummyStream:
+            def start(self):
+                pass
+
+            def stop(self):
+                pass
+
+            def close(self):
+                pass
+
             def __enter__(self):
                 return self
 
             def __exit__(self, exc_type, exc, tb):
                 return False
 
-        return _Ctx()
+        return DummyStream()
 
     sd_mod = types.SimpleNamespace(
         WasapiSettings=DummySettings,

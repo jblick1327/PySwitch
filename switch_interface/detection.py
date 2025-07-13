@@ -11,8 +11,31 @@ from typing import Tuple
 
 import numpy as np
 
-# Expose I/O helpers from :mod:`listener` for backward compatibility
-from .listener import check_device, listen
+# Lightweight shims to keep the old API stable
+import warnings
+
+def check_device(*args, **kwargs):
+    """Deprecated wrapper of :func:`listener.check_device`."""
+    warnings.warn(
+        "check_device moved to switch_interface.listener",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    from .listener import check_device as _real
+
+    return _real(*args, **kwargs)
+
+
+def listen(*args, **kwargs):
+    """Deprecated wrapper of :func:`listener.listen`."""
+    warnings.warn(
+        "listen moved to switch_interface.listener",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    from .listener import listen as _real
+
+    return _real(*args, **kwargs)
 
 __all__ = ["EdgeState", "detect_edges", "check_device", "listen"]
 

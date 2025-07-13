@@ -165,8 +165,15 @@ def _setup_dummy_sd(monkeypatch):
             {"name": "Mic2", "max_input_channels": 1},
         ],
         check_input_settings=check_input_settings,
+        default=types.SimpleNamespace(hostapi=0),
+        query_hostapis=lambda idx: {"name": "Windows WASAPI"},
     )
     monkeypatch.setitem(sys.modules, "sounddevice", sd_mod)
+    import switch_interface.audio.stream as stream
+    import switch_interface.audio.backends.wasapi as wasapi
+    importlib.reload(stream)
+    importlib.reload(wasapi)
+    stream.rescan_backends()
     return calls
 
 
