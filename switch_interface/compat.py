@@ -49,6 +49,6 @@ def listen(
             params = {k: config.get(k) for k in attrs}
         else:
             params = {k: getattr(config, k, None) for k in attrs}
-        return _real(on_press, **params)
+        return _real(on_press, **params)  # type: ignore[arg-type]
 
     return _real(on_press, **kwargs)
