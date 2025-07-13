@@ -1,11 +1,11 @@
-# pyproject.toml  – v0.2.0
+# pyproject.toml  – v0.1.0
 [build-system]
 requires      = ["hatchling>=1.24.2"]
 build-backend = "hatchling.build"
 
 [project]
 name            = "switch-interface"
-version         = "0.2.0"
+version         = "0.1.0"
 description     = "Switch-accessible on-screen keyboard with audio-based single-switch scanning."
 readme          = "README.md"
 requires-python = ">=3.11"
