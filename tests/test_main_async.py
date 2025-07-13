@@ -46,7 +46,7 @@ def test_launch_continues_when_device_check_hangs(monkeypatch, caplog):
     monkeypatch.setattr("switch_interface.kb_layout_io.load_keyboard", lambda p: "kb")
     monkeypatch.setattr("switch_interface.detection.listen", lambda *a, **k: None)
     monkeypatch.setattr(
-        "switch_interface.detection.check_device", lambda *a, **k: time.sleep(5)
+        "switch_interface.listener.check_device", lambda *a, **k: time.sleep(5)
     )
 
     calib_mod = types.SimpleNamespace(
