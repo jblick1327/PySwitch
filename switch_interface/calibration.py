@@ -200,16 +200,15 @@ def calibrate(config: DetectorConfig | None = None) -> DetectorConfig:
     def _start_stream() -> None:
         nonlocal stream
         nonlocal stream_cm, stream
-        kwargs = dict(
-            samplerate=int(sr_var.get()),
-            blocksize=int(bs_var.get()),
-            channels=1,
-            dtype="float32",
-            callback=_callback,
-            device=dev_var.get() or None,
-        )
         try:
-            stream_cm = open_input(**kwargs)
+            stream_cm = open_input(
+                samplerate=int(sr_var.get()),
+                blocksize=int(bs_var.get()),
+                channels=1,
+                dtype="float32",
+                callback=_callback,
+                device=dev_var.get() or None,
+            )
             stream = stream_cm.__enter__()
         except sd.PortAudioError as exc:
             stream_cm = None
