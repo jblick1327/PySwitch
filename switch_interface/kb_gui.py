@@ -1,5 +1,6 @@
 import tkinter as tk
-from tkinter import font, ttk
+from tkinter import font
+from tkinter import ttk
 from types import SimpleNamespace
 from typing import Callable
 
@@ -77,8 +78,6 @@ class VirtualKeyboard:
         button_frame.pack(fill=tk.X, padx=5, pady=(0, 5))
 
         try:
-            from tkinter import ttk
-
             ttk.Sizegrip(button_frame).pack(side=tk.RIGHT, padx=(0, 5))
         except Exception:
             # Sizegrip may not be available or may fail under headless tests.

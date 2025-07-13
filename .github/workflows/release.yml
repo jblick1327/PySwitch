@@ -1,0 +1,35 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: windows-latest
+    env:
+      WINDOWS_CERT: ${{ secrets.WINDOWS_CERT }}
+      WINDOWS_CERT_PASS: ${{ secrets.WINDOWS_CERT_PASS }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: pip install -r requirements.txt pyinstaller
+      - name: Build executable
+        run: pyinstaller pyinstaller.spec
+      - name: Sign executable
+        if: env.WINDOWS_CERT != ''
+        run: signtool sign /fd SHA256 /f ${{ env.WINDOWS_CERT }} /p ${{ env.WINDOWS_CERT_PASS }} dist/switch-interface.exe
+      - name: Rename artifact
+        run: mv dist/switch-interface.exe dist/switch-interface-${{ github.ref_name }}.exe
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          generate_release_notes: true
+          files: dist/switch-interface-${{ github.ref_name }}.exe

@@ -1,0 +1,7 @@
+scipy
+pyinstaller
+pytest
+ruff
+mypy
+
+pytest-cov
