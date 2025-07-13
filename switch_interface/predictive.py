@@ -125,20 +125,32 @@ class Predictor:
         return [letter for letter, _ in source.most_common(k)]
 
 
-# A module-level predictor for simple use
-default_predictor = Predictor()
+_default_predictor: Predictor | None = None
+
+
+def _get_default_predictor() -> Predictor:
+    global _default_predictor
+    if _default_predictor is None:
+        _default_predictor = Predictor()
+    return _default_predictor
 
 
 def suggest_words(prefix: str, k: int = 3) -> list[str]:
     """Wrapper around :meth:`Predictor.suggest_words` using ``default_predictor``."""
 
-    return default_predictor.suggest_words(prefix, k)
+    return _get_default_predictor().suggest_words(prefix, k)
 
 
 def suggest_letters(prefix: str, k: int = 3) -> list[str]:
     """Wrapper around :meth:`Predictor.suggest_letters` using ``default_predictor``."""
 
-    return default_predictor.suggest_letters(prefix, k)
+    return _get_default_predictor().suggest_letters(prefix, k)
+
+
+def __getattr__(name: str):
+    if name == "default_predictor":
+        return _get_default_predictor()
+    raise AttributeError(name)
 
 
 __all__ = [

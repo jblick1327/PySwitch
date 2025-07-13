@@ -8,7 +8,11 @@ from . import config
 from .kb_layout import Key, Keyboard
 from .key_types import Action
 from .modifier_state import ModifierState
-from .predictive import Predictor, default_predictor
+from typing import TYPE_CHECKING
+from . import predictive
+
+if TYPE_CHECKING:  # pragma: no cover - typing only
+    from .predictive import Predictor
 
 
 class VirtualKeyboard:
@@ -19,12 +23,15 @@ class VirtualKeyboard:
         keyboard: Keyboard,
         on_key: Callable,
         state: ModifierState,
-        predictor: Predictor | None = None,
+        predictor: "Predictor" | None = None,
     ):
         self.keyboard = keyboard
         self.on_key = on_key
         self.state = state
-        self.predictor = predictor or default_predictor
+        if predictor is None:
+            self.predictor = predictive.default_predictor
+        else:
+            self.predictor = predictor
 
         self.current_page = 0
         self.highlight_index = 0
