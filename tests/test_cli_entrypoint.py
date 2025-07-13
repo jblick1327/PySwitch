@@ -6,10 +6,9 @@ from pathlib import Path
 
 def test_module_uses_launcher():
     code = (
-        "import sys, types, runpy\n"
+        "import os, sys, types, runpy\n"
+        "os.environ['SI_TEST_MODE'] = '1'\n"
         "sys.modules['sounddevice'] = types.SimpleNamespace()\n"
-        "import switch_interface.launcher as l\n"
-        "l.main = lambda: print('launcher-main-invoked')\n"
         "runpy.run_module('switch_interface', run_name='__main__')\n"
     )
     result = subprocess.run(
@@ -24,10 +23,9 @@ def test_module_uses_launcher():
 def test_console_script_uses_launcher():
     script = Path(sys.executable).parent / "switch-interface"
     code = (
-        "import sys, types, runpy, pathlib\n"
+        "import os, sys, types, runpy, pathlib\n"
+        "os.environ['SI_TEST_MODE'] = '1'\n"
         "sys.modules['sounddevice'] = types.SimpleNamespace()\n"
-        "import switch_interface.launcher as l\n"
-        "l.main = lambda: print('launcher-main-invoked')\n"
         f"runpy.run_path(str(pathlib.Path('{script}')), run_name='__main__')\n"
     )
     result = subprocess.run(
