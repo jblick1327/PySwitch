@@ -9,6 +9,7 @@ from typing import Counter as CounterType
 from typing import DefaultDict
 
 from wordfreq import top_n_list
+from typing import TYPE_CHECKING
 
 
 class Predictor:
@@ -151,6 +152,10 @@ def __getattr__(name: str):
     if name == "default_predictor":
         return _get_default_predictor()
     raise AttributeError(name)
+
+
+if TYPE_CHECKING:  # pragma: no cover - exported via __getattr__
+    default_predictor: Predictor
 
 
 __all__ = [
