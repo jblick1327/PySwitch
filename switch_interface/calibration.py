@@ -252,6 +252,18 @@ def calibrate(config: DetectorConfig | None = None) -> DetectorConfig:
 
     def _start() -> None:
         nonlocal result
+        try:
+            _start_stream()
+        except RuntimeError:
+            root.withdraw()
+            messagebox.showerror(
+                "Error",
+                "Could not read switch",
+                parent=root,
+            )
+            root.destroy()
+            result = config
+            return
         result = DetectorConfig(
             upper_offset=u_var.get(),
             lower_offset=l_var.get(),
@@ -270,18 +282,6 @@ def calibrate(config: DetectorConfig | None = None) -> DetectorConfig:
         root.destroy()
 
     root.protocol("WM_DELETE_WINDOW", _on_close)
-
-    try:
-        _start_stream()
-    except RuntimeError:
-        root.withdraw()
-        messagebox.showerror(
-            "Error",
-            "Could not read switch",
-            parent=root,
-        )
-        root.destroy()
-        return config
 
     _update_wave()
     root.mainloop()
