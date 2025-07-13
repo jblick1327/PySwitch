@@ -70,8 +70,12 @@ def test_listen_retries_shared_mode(monkeypatch):
 
     importlib.reload(detection)
 
+    import switch_interface.listener as listener
+
     monkeypatch.setattr(
-        detection.time, "sleep", lambda _: (_ for _ in ()).throw(KeyboardInterrupt)
+        listener.time,
+        "sleep",
+        lambda _: (_ for _ in ()).throw(KeyboardInterrupt),
     )
 
     detection.listen(lambda: None, samplerate=1, blocksize=1)
@@ -108,8 +112,12 @@ def test_listen_raises_runtime_error(monkeypatch):
 
     importlib.reload(detection)
 
+    import switch_interface.listener as listener
+
     monkeypatch.setattr(
-        detection.time, "sleep", lambda _: (_ for _ in ()).throw(KeyboardInterrupt)
+        listener.time,
+        "sleep",
+        lambda _: (_ for _ in ()).throw(KeyboardInterrupt),
     )
 
     with pytest.raises(RuntimeError):
