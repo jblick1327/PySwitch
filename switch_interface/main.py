@@ -15,7 +15,7 @@ def main() -> None:
         root.destroy()
     cfg = config.load()
     dwell = cfg.get("scan_interval", 0.45)
-    __main__.main(["--dwell", str(dwell)])
+    __main__.keyboard_main(["--dwell", str(dwell)])
 
 
 if __name__ == "__main__":  # pragma: no cover - manual launch

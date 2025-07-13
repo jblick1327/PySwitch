@@ -77,7 +77,7 @@ def test_launch_continues_when_device_check_hangs(monkeypatch, caplog):
     monkeypatch.setattr(cli.threading, "Thread", DummyThread)
 
     with caplog.at_level(logging.WARNING):
-        cli.main([])
+        cli.keyboard_main([])
 
     assert "init" in events
     assert "run" in events

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from switch_interface.logging import setup as _setup_logging
+from . import launcher
 
 _setup_logging()
 
@@ -29,7 +30,7 @@ def _open_log_if_exists() -> None:
             subprocess.run(["xdg-open", _LOG_PATH])
 
 
-def main(argv: list[str] | None = None) -> None:
+def keyboard_main(argv: list[str] | None = None) -> None:
     """Launch the scanning keyboard interface."""
     parser = argparse.ArgumentParser(
         description="Run the switch-accessible virtual keyboard",
@@ -129,6 +130,11 @@ def main(argv: list[str] | None = None) -> None:
     ).start()
     vk.root.after(10, _pump_queue)
     vk.run()
+
+
+def main(argv: list[str] | None = None) -> None:
+    """Launch the GUI launcher."""
+    launcher.main()
 
 
 if __name__ == "__main__":  # pragma: no cover - manual entry point

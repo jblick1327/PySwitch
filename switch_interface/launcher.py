@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import tkinter as tk
 from importlib import resources
 from pathlib import Path
@@ -22,6 +23,10 @@ def list_layouts() -> list[Path]:
 
 
 def main() -> None:
+    if os.getenv("SI_TEST_MODE") == "1":
+        print("launcher-main-invoked")
+        return
+
     root = tk.Tk()
     root.title("Launch Switch Interface")
 
@@ -62,7 +67,7 @@ def main() -> None:
         if rowcol_var.get():
             args.append("--row-column")
         try:
-            __main__.main(args)
+            __main__.keyboard_main(args)
         except RuntimeError:
             tk.messagebox.showerror(
                 "Error",
