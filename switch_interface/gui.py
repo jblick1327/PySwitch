@@ -3,6 +3,7 @@ from __future__ import annotations
 import threading
 import tkinter as tk
 from tkinter import ttk, messagebox
+from typing import Literal
 
 import sounddevice as sd
 
@@ -21,17 +22,19 @@ class FirstRunWizard(tk.Toplevel):
         self.device_var = tk.StringVar(master=self)
         self.preset_var = tk.StringVar(master=self, value="medium")
         self.status_var = tk.StringVar(master=self, value="")
-        self.progress = None
+        self.progress: ttk.Progressbar | None = None
         self.calib_data: dict | None = None
 
-        self.steps = []
+        self.steps: list[tk.Frame] = []
         self._build_steps()
         self._show_step(0)
 
-        self.transient(master)
+        if master is not None:
+            self.transient(master if isinstance(master, tk.Wm) else None)
         self.grab_set()
         self.update_idletasks()
         root = master if master is not None else self.master
+        assert isinstance(root, tk.Misc)
         self.geometry(
             f"+{root.winfo_screenwidth()//2 - self.winfo_width()//2}"
             f"+{root.winfo_screenheight()//3 - self.winfo_height()//2}"
@@ -72,7 +75,7 @@ class FirstRunWizard(tk.Toplevel):
                 text="No microphone or line-in devices detected. Please connect one and restart.",
                 wraplength=300,
             ).pack(pady=5)
-            next_state = tk.DISABLED
+            next_state: Literal["normal", "active", "disabled"] = tk.DISABLED
         else:
             next_state = tk.NORMAL
         tk.Button(frame, text="Next", command=lambda: self._show_step(1), state=next_state).pack(pady=5)
@@ -108,8 +111,9 @@ class FirstRunWizard(tk.Toplevel):
     def _step_calibration(self) -> tk.Frame:
         frame = tk.Frame(self)
         tk.Label(frame, text="Auto-calibration").pack(pady=(0, 5))
-        self.progress = ttk.Progressbar(frame, mode="indeterminate")
-        self.progress.pack(fill=tk.X, pady=5)
+        progress = ttk.Progressbar(frame, mode="indeterminate")
+        progress.pack(fill=tk.X, pady=5)
+        self.progress = progress
         tk.Button(frame, text="Start", command=self._start_calibration).pack()
         tk.Label(frame, textvariable=self.status_var).pack(pady=5)
         self.next_btn = tk.Button(frame, text="Next", command=lambda: self._show_step(2), state=tk.DISABLED)
@@ -147,7 +151,7 @@ class FirstRunWizard(tk.Toplevel):
                     samplerate=self.calib_data["samplerate"],
                     blocksize=self.calib_data["blocksize"],
                     debounce_ms=self.calib_data["debounce_ms"],
-                    device=device,
+                    device=str(device) if device is not None else None,
                 )
                 calibration.save_config(calib_cfg)
         except Exception as exc:  # pragma: no cover - filesystem errors
