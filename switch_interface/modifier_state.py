@@ -1,6 +1,9 @@
 from __future__ import annotations
+
 from dataclasses import dataclass, field
+
 from pynput.keyboard import Key as OSKey
+
 
 @dataclass
 class ModifierState:

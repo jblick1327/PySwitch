@@ -44,8 +44,10 @@ class InputBackend(abc.ABC):
     ) -> Iterator[sd.InputStream]:
         """Yield a started :class:`sounddevice.InputStream`."""
 
+
 _BACKENDS: list[InputBackend] = []
 _BACKENDS_LOADED = False
+
 
 def _discover_backends() -> None:
 
@@ -109,6 +111,7 @@ def _select_backend(device: int | str | None) -> InputBackend:
         f"No suitable audio back-end found for host API {info.get('name', hostapi_idx)}"
     )
 
+
 @contextlib.contextmanager
 def open_input(
     *,
@@ -146,9 +149,10 @@ def open_input(
     ) as stream:
         yield stream
 
+
 def rescan_backends() -> None:
     global _BACKENDS_LOADED
     _BACKENDS_LOADED = False
     _BACKENDS.clear()
-    _discover_backends()    
+    _discover_backends()
     log.debug("Re-scanning backends")

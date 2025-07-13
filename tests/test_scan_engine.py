@@ -1,7 +1,7 @@
 import types
 
-from switch_interface.scan_engine import Scanner, ScanPhase
 from switch_interface.key_types import Action
+from switch_interface.scan_engine import Scanner, ScanPhase
 
 
 class DummyRoot:
@@ -89,7 +89,10 @@ def test_reset_after_press_starts_from_first_key():
 
 def test_reset_scan_row_resets_to_row_start_without_global_reset():
     kb = DummyKeyboard()
-    kb.key_widgets[1] = (None, types.SimpleNamespace(action=Action.reset_scan_row, dwell_mult=None))
+    kb.key_widgets[1] = (
+        None,
+        types.SimpleNamespace(action=Action.reset_scan_row, dwell_mult=None),
+    )
     scanner = Scanner(kb, dwell=0.1, reset_after_press=False)
     scanner.start()
     # advance once to highlight index 1 (the reset key)

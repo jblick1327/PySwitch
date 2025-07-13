@@ -6,9 +6,7 @@ import tkinter as tk
 from importlib import resources
 from pathlib import Path
 
-from . import __main__
-from . import calibration
-
+from . import __main__, calibration
 
 LAYOUT_PACKAGE = "switch_interface.resources.layouts"
 
@@ -50,9 +48,9 @@ def main() -> None:
         orient=tk.HORIZONTAL,
     ).pack(fill=tk.X, padx=10)
 
-    tk.Checkbutton(
-        root, text="Row/column scanning", variable=rowcol_var
-    ).pack(padx=10, pady=5)
+    tk.Checkbutton(root, text="Row/column scanning", variable=rowcol_var).pack(
+        padx=10, pady=5
+    )
 
     tk.Button(root, text="Calibrate", command=calibration.calibrate).pack(
         side=tk.LEFT, padx=10, pady=10

@@ -1,6 +1,8 @@
 import logging
 import math
+
 import numpy as np
+
 from switch_interface.auto_calibration import calibrate
 
 

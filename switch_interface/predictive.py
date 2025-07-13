@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
+import threading
 from collections import Counter, defaultdict
 from functools import lru_cache
-from typing import Counter as CounterType, DefaultDict
-
-import threading
+from typing import Counter as CounterType
+from typing import DefaultDict
 
 from wordfreq import top_n_list
 
@@ -16,9 +16,7 @@ class Predictor:
 
     def __init__(self, words: list[str] | None = None) -> None:
         self.words = words or top_n_list("en", 80_000)
-        self.fallback_starts = Counter(
-            w[0] for w in self.words if w and w[0].isalpha()
-        )
+        self.fallback_starts = Counter(w[0] for w in self.words if w and w[0].isalpha())
         self.start_letters: CounterType[str] | None = None
         self.bigrams: DefaultDict[str, CounterType[str]] | None = None
         self.trigrams: DefaultDict[str, CounterType[str]] | None = None

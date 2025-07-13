@@ -19,6 +19,7 @@ def get_extra_settings() -> sd.WasapiSettings | None:
         pass
     return None
 
+
 log = logging.getLogger(__name__)
 
 

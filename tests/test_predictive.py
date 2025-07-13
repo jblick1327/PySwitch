@@ -1,4 +1,5 @@
 import importlib
+
 import switch_interface.predictive as predictive
 
 
@@ -16,4 +17,3 @@ def test_ngram_thread_starts_on_demand(monkeypatch):
     letters = predictive.suggest_letters("an")
     assert len(letters) > 0
     assert predictive.default_predictor.thread is not None
-

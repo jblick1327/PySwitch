@@ -1,18 +1,18 @@
-from dataclasses import dataclass, asdict
 import json
+import math
 import os
-from pathlib import Path
-
-from appdirs import user_config_dir
 import tkinter as tk
+from dataclasses import asdict, dataclass
+from pathlib import Path
 from tkinter import messagebox
 
 import numpy as np
 import sounddevice as sd
-import math
+from appdirs import user_config_dir
 
 from .audio.backends.wasapi import get_extra_settings
-from .detection import detect_edges, EdgeState
+from .detection import EdgeState, detect_edges
+
 
 @dataclass
 class DetectorConfig:
@@ -56,17 +56,21 @@ def calibrate(config: DetectorConfig | None = None) -> DetectorConfig:
     db_var = tk.IntVar(master=root, value=config.debounce_ms)
     dev_var = tk.StringVar(master=root, value=config.device or "")
 
-    #sample rate selection. TODO: add a loop that polls the hardware for each and filter the list
+    # sample rate selection. TODO: add a loop that polls the hardware for each and filter the list
     STANDARD_RATES = [8000, 16000, 22050, 32000, 44100, 48000, 88200, 96000]
     sr_var = tk.StringVar(master=root, value=str(config.samplerate))
     tk.Label(root, text="Sample rate").pack(padx=10, pady=(10, 0))
-    tk.OptionMenu(root, sr_var, *[str(r) for r in STANDARD_RATES]).pack(fill=tk.X, padx=10)
+    tk.OptionMenu(root, sr_var, *[str(r) for r in STANDARD_RATES]).pack(
+        fill=tk.X, padx=10
+    )
 
-    #do the same with block size
+    # do the same with block size
     STANDARD_BLOCKS = [64, 128, 256, 512, 1024, 2048]
     bs_var = tk.StringVar(master=root, value=str(config.blocksize))
     tk.Label(root, text="Block size").pack(padx=10, pady=(10, 0))
-    tk.OptionMenu(root, bs_var, *[str(b) for b in STANDARD_BLOCKS]).pack(fill=tk.X, padx=10)
+    tk.OptionMenu(root, bs_var, *[str(b) for b in STANDARD_BLOCKS]).pack(
+        fill=tk.X, padx=10
+    )
 
     wave_canvas = tk.Canvas(root, width=500, height=150, bg="white")
     wave_canvas.pack(padx=10, pady=5)
@@ -182,13 +186,9 @@ def calibrate(config: DetectorConfig | None = None) -> DetectorConfig:
                 try:
                     stream = sd.InputStream(**kwargs)
                 except sd.PortAudioError as exc2:
-                    raise RuntimeError(
-                        "Failed to open audio input device"
-                    ) from exc2
+                    raise RuntimeError("Failed to open audio input device") from exc2
             else:
-                raise RuntimeError(
-                    "Failed to open audio input device"
-                ) from exc
+                raise RuntimeError("Failed to open audio input device") from exc
         stream.start()
 
     def _restart_stream() -> None:
@@ -259,7 +259,7 @@ def calibrate(config: DetectorConfig | None = None) -> DetectorConfig:
         )
         root.destroy()
         return config
-    
+
     _update_wave()
     root.mainloop()
 
@@ -272,8 +272,13 @@ def run_auto_calibration(device_id: int | str | None = None) -> dict:
     duration = 3
     samplerate = 44_100
     blocksize = 256
-    stream = sd.rec(int(duration * samplerate), samplerate=samplerate, channels=1,
-                    dtype="float32", device=device_id)
+    stream = sd.rec(
+        int(duration * samplerate),
+        samplerate=samplerate,
+        channels=1,
+        dtype="float32",
+        device=device_id,
+    )
     sd.wait()
     samples = stream.reshape(-1)
     from .auto_calibration import calibrate

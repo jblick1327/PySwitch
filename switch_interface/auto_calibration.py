@@ -20,8 +20,8 @@ from typing import List
 
 import numpy as np
 from numpy.lib.stride_tricks import sliding_window_view
-from scipy.signal import find_peaks
 from scipy.ndimage import uniform_filter1d
+from scipy.signal import find_peaks
 
 from .detection import EdgeState, detect_edges
 
@@ -147,7 +147,6 @@ def _memoised_count(
     lower: float,
     debounce_ms: int,
     block: int,
-
 ) -> list[int]:
     """Return a list so :func:`_count_events` can use the result directly."""
     samples = np.frombuffer(buf, dtype=np.dtype(dtype_str), count=n)

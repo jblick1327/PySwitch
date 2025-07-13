@@ -1,16 +1,23 @@
 import types
-from switch_interface.pc_control import PCController
+
 from pynput.keyboard import Key as OSKey
+
+from switch_interface.pc_control import PCController
+
 
 class DummyKB:
     def __init__(self):
         self.events = []
+
     def press(self, k):
         self.events.append(("press", k))
+
     def release(self, k):
         self.events.append(("release", k))
+
     def type(self, t):
         self.events.append(("type", t))
+
 
 def test_shift_latch_sequence():
     kb = DummyKB()

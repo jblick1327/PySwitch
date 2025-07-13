@@ -5,7 +5,7 @@ import numpy as np
 
 sys.modules.setdefault("sounddevice", SimpleNamespace())
 
-from switch_interface.auto_calibration import _rolling_baseline, _choose_thresholds
+from switch_interface.auto_calibration import _choose_thresholds, _rolling_baseline
 
 
 def test_rolling_baseline_constant():
