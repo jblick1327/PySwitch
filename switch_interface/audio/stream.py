@@ -124,7 +124,12 @@ def open_input(
     backend: Optional[str] = None,
     **extra_kwargs: Any,
 ) -> Iterator[sd.InputStream]:
-    """Yield a started :class:`sounddevice.InputStream` from the best back-end."""
+    """Yield a started :class:`sounddevice.InputStream`.
+
+    The best input backend is chosen for ``device`` and platform-specific
+    fallbacks (e.g. WASAPI shared mode) are handled automatically. Use this
+    instead of instantiating ``sd.InputStream`` directly.
+    """
 
     _discover_backends()
 

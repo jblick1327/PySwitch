@@ -3,6 +3,7 @@ import math
 import os
 import tkinter as tk
 from dataclasses import asdict, dataclass
+import contextlib
 from contextlib import suppress
 from pathlib import Path
 from tkinter import messagebox
@@ -11,7 +12,7 @@ import numpy as np
 import sounddevice as sd
 from appdirs import user_config_dir
 
-from .audio.backends.wasapi import get_extra_settings
+from .audio.stream import open_input
 from .detection import EdgeState, detect_edges
 
 
@@ -157,17 +158,17 @@ def calibrate(config: DetectorConfig | None = None) -> DetectorConfig:
     buf_index = 0
     bias = 0.0
     stream: sd.InputStream | None = None
+    stream_cm: contextlib.AbstractContextManager | None = None
     edge_state = EdgeState(armed=True, cooldown=0)
     press_pending = False
     normal_bg = root.cget("bg")
 
     def _stop_stream() -> None:
-        nonlocal stream
-        if stream is not None:
-            try:
-                stream.stop()
-            finally:
-                stream.close()
+        nonlocal stream, stream_cm
+        if stream_cm is not None:
+            with contextlib.suppress(Exception):
+                stream_cm.__exit__(None, None, None)
+            stream_cm = None
             stream = None
 
     def _callback(indata: np.ndarray, frames: int, time: int, status: int) -> None:
@@ -198,7 +199,7 @@ def calibrate(config: DetectorConfig | None = None) -> DetectorConfig:
 
     def _start_stream() -> None:
         nonlocal stream
-        extra = get_extra_settings()
+        nonlocal stream_cm, stream
         kwargs = dict(
             samplerate=int(sr_var.get()),
             blocksize=int(bs_var.get()),
@@ -207,20 +208,13 @@ def calibrate(config: DetectorConfig | None = None) -> DetectorConfig:
             callback=_callback,
             device=dev_var.get() or None,
         )
-        if extra is not None:
-            kwargs["extra_settings"] = extra
         try:
-            stream = sd.InputStream(**kwargs)
+            stream_cm = open_input(**kwargs)
+            stream = stream_cm.__enter__()
         except sd.PortAudioError as exc:
-            if extra is not None:
-                kwargs.pop("extra_settings", None)
-                try:
-                    stream = sd.InputStream(**kwargs)
-                except sd.PortAudioError as exc2:
-                    raise RuntimeError("Failed to open audio input device") from exc2
-            else:
-                raise RuntimeError("Failed to open audio input device") from exc
-        stream.start()
+            stream_cm = None
+            stream = None
+            raise RuntimeError("Failed to open audio input device") from exc
 
     def _restart_stream() -> None:
         _stop_stream()

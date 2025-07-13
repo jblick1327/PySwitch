@@ -1,9 +1,4 @@
-"""Audio listener for switch activation.
-
-This module is responsible solely for opening the microphone input and
-emitting callbacks when a switch press is detected.  It relies on the
-edge-detection algorithm defined in :mod:`switch_interface.detection`.
-"""
+"""Monitor audio input and call a handler when a switch press is detected."""
 from __future__ import annotations
 
 import math
@@ -12,7 +7,7 @@ from typing import Callable, Optional
 
 import numpy as np
 
-from .audio.backends.wasapi import get_extra_settings
+from .audio.stream import open_input
 
 
 __all__ = ["listen", "check_device"]
@@ -22,29 +17,18 @@ def check_device(*, samplerate: int = 44_100, blocksize: int = 256, device: int 
     """Raise ``RuntimeError`` if the input device can't be opened."""
     import sounddevice as sd
 
-    extra = get_extra_settings()
-    kwargs = {
-        "samplerate": samplerate,
-        "blocksize": blocksize,
-        "channels": 1,
-        "dtype": "float32",
-        "device": device,
-    }
-    if extra is not None:
-        kwargs["extra_settings"] = extra
     try:
-        with sd.InputStream(callback=lambda *a: None, **kwargs):
+        with open_input(
+            samplerate=samplerate,
+            blocksize=blocksize,
+            channels=1,
+            dtype="float32",
+            device=device,
+            callback=lambda *a: None,
+        ):
             pass
     except sd.PortAudioError as exc:
-        if extra is not None:
-            kwargs.pop("extra_settings", None)
-            try:
-                with sd.InputStream(callback=lambda *a: None, **kwargs):
-                    pass
-            except sd.PortAudioError as exc2:
-                raise RuntimeError("Failed to open audio input device") from exc2
-        else:
-            raise RuntimeError("Failed to open audio input device") from exc
+        raise RuntimeError("Failed to open audio input device") from exc
 
 
 def listen(
@@ -80,20 +64,15 @@ def listen(
         if pressed:
             on_press()
 
-    extra = get_extra_settings()
-    stream_kwargs = {
-        "samplerate": samplerate,
-        "blocksize": blocksize,
-        "channels": 1,
-        "dtype": "float32",
-        "callback": _callback,
-        "device": device,
-    }
-    if extra is not None:
-        stream_kwargs["extra_settings"] = extra
-
-    def _run(kwargs):
-        with sd.InputStream(**kwargs):
+    def _run() -> None:
+        with open_input(
+            samplerate=samplerate,
+            blocksize=blocksize,
+            channels=1,
+            dtype="float32",
+            callback=_callback,
+            device=device,
+        ):
             try:
                 while True:
                     time.sleep(0.1)
@@ -101,13 +80,6 @@ def listen(
                 return
 
     try:
-        _run(stream_kwargs)
+        _run()
     except sd.PortAudioError as exc:
-        if extra is not None:
-            stream_kwargs.pop("extra_settings", None)
-            try:
-                _run(stream_kwargs)
-            except sd.PortAudioError as exc2:
-                raise RuntimeError("Failed to open audio input device") from exc2
-        else:
-            raise RuntimeError("Failed to open audio input device") from exc
+        raise RuntimeError("Failed to open audio input device") from exc
