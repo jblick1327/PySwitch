@@ -162,6 +162,7 @@ def calibrate(config: DetectorConfig | None = None) -> DetectorConfig:
     edge_state = EdgeState(armed=True, cooldown=0)
     press_pending = False
     normal_bg = root.cget("bg")
+    _update_id: str | None = None
 
     def _stop_stream() -> None:
         nonlocal stream, stream_cm
@@ -220,10 +221,12 @@ def calibrate(config: DetectorConfig | None = None) -> DetectorConfig:
         _start_stream()
 
     def _update_wave() -> None:
+        nonlocal bias, press_pending, _update_id
+        if not getattr(root, "winfo_exists", lambda: True)():
+            return
         wave_canvas.delete("all")
         _draw_ruler()
         data = np.concatenate([buf[buf_index:], buf[:buf_index]])
-        nonlocal bias
         bias = 0.995 * bias + 0.005 * float(data.mean())
         step = max(1, len(data) // WIDTH)
         if step > 1:
@@ -243,12 +246,11 @@ def calibrate(config: DetectorConfig | None = None) -> DetectorConfig:
         y_lower = HEIGHT / 2 - lower * (HEIGHT / 2)
         wave_canvas.create_line(0, y_upper, WIDTH, y_upper, fill="red", tags="thr")
         wave_canvas.create_line(0, y_lower, WIDTH, y_lower, fill="red", tags="thr")
-        nonlocal press_pending
         if press_pending:
             root.configure(bg="yellow")
             root.after(150, lambda: root.configure(bg=normal_bg))
             press_pending = False
-        root.after(30, _update_wave)
+        _update_id = root.after(30, _update_wave)
 
     def _start() -> None:
         nonlocal result
@@ -261,6 +263,8 @@ def calibrate(config: DetectorConfig | None = None) -> DetectorConfig:
                 "Could not read switch",
                 parent=root,
             )
+            if _update_id is not None and hasattr(root, "after_cancel"):
+                root.after_cancel(_update_id)
             root.destroy()
             result = config
             return
@@ -273,12 +277,16 @@ def calibrate(config: DetectorConfig | None = None) -> DetectorConfig:
             device=dev_var.get() or None,
         )
         _stop_stream()
+        if _update_id is not None and hasattr(root, "after_cancel"):
+            root.after_cancel(_update_id)
         root.destroy()
 
     tk.Button(root, text="Start", command=_start).pack(pady=10)
 
     def _on_close() -> None:
         _stop_stream()
+        if _update_id is not None and hasattr(root, "after_cancel"):
+            root.after_cancel(_update_id)
         root.destroy()
 
     root.protocol("WM_DELETE_WINDOW", _on_close)

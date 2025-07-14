@@ -110,6 +110,7 @@ def keyboard_main(argv: list[str] | None = None) -> None:
     scanner.start()
 
     press_queue: SimpleQueue[None] = SimpleQueue()
+    shutdown = threading.Event()
 
     def _on_switch() -> None:
         press_queue.put(None)
@@ -121,13 +122,20 @@ def keyboard_main(argv: list[str] | None = None) -> None:
             except Empty:
                 break
             scanner.on_press()
-        vk.root.after(10, _pump_queue)
+        if not shutdown.is_set():
+            vk.root.after(10, _pump_queue)
+
+    def _on_close() -> None:
+        shutdown.set()
+        scanner.stop()
+        vk.root.destroy()
 
     threading.Thread(
         target=listen,
         args=(_on_switch, cfg),
         daemon=True,
     ).start()
+    vk.root.protocol("WM_DELETE_WINDOW", _on_close)
     vk.root.after(10, _pump_queue)
     vk.run()
 

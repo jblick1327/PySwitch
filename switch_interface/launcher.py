@@ -76,15 +76,17 @@ def main() -> None:
         if rowcol_var.get():
             args.append("--row-column")
         try:
+            root.withdraw()
+            try:
+                root.destroy()
+            except tk.TclError:
+                pass
             __main__.keyboard_main(args)
         except RuntimeError:
             tk.messagebox.showerror(
                 "Error",
                 "Could not read switch. Open Calibrate to choose a microphone.",
-                parent=root,
             )
-            return
-        root.destroy()
 
     tk.Button(root, text="Start", command=_start).pack(side=tk.RIGHT, padx=10, pady=10)
 
