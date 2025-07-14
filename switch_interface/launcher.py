@@ -28,13 +28,13 @@ def main() -> None:
         print("launcher-main-invoked")
         return
 
-    settings = config.load_settings()
+    settings = config.load()
     if os.getenv("SKIP_FIRST_RUN") != "1" and not settings.get("calibration_complete"):
         tmp_root = tk.Tk()
         tmp_root.withdraw()
         FirstRunWizard(tmp_root).show_modal()
         tmp_root.destroy()
-        settings = config.load_settings()
+        settings = config.load()
 
     root = tk.Tk()
     root.title("Launch Switch Interface")

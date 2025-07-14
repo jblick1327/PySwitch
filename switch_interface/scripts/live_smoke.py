@@ -4,7 +4,7 @@ import numpy as np
 import sounddevice as sd
 
 from switch_interface.auto_calibration import calibrate
-from switch_interface.detection import listen
+from switch_interface.listener import listen
 
 FS = 48_000
 TARGET = 15

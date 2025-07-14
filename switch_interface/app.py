@@ -8,13 +8,13 @@ from .gui import FirstRunWizard
 
 
 def main() -> None:
-    settings = config.load_settings()
+    settings = config.load()
     root = tk.Tk()
     root.withdraw()
     if os.getenv("SKIP_FIRST_RUN") != "1":
         if not settings.get("calibration_complete"):
             FirstRunWizard(root).show_modal()
-            settings = config.load_settings()
+            settings = config.load()
     root.destroy()
     dwell = settings.get("scan_interval", 0.45)
     __main__.keyboard_main(["--dwell", str(dwell)])

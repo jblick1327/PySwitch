@@ -60,8 +60,7 @@ def keyboard_main(argv: list[str] | None = None) -> None:
     args = parser.parse_args(argv)
 
     from .calibration import calibrate, load_config, save_config
-    from .listener import check_device
-    from .detection import listen
+    from .listener import check_device, listen
     from .kb_gui import VirtualKeyboard
     from .kb_layout_io import load_keyboard
     from .pc_control import PCController
