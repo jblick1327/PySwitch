@@ -156,7 +156,7 @@ class FirstRunWizard(tk.Toplevel):
             "calibration_complete": True,
         }
         try:
-            config.save_settings(cfg)
+            config.save(cfg)
             if self.calib_data is not None:
                 calib_cfg = calibration.DetectorConfig(
                     upper_offset=self.calib_data["upper_offset"],

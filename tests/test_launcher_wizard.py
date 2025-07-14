@@ -18,7 +18,7 @@ def test_wizard_invoked_first_run(monkeypatch, tmp_path):
     monkeypatch.setattr(config, "CONFIG_FILE", tmp_path / "cfg.json")
     monkeypatch.setattr(
         config,
-        "load_settings",
+        "load",
         lambda path=None: {"calibration_complete": False},
     )
 
@@ -56,7 +56,7 @@ def test_wizard_runs_when_setting_missing(monkeypatch, tmp_path):
     sys.modules["tkinter"].RIGHT = "right"
 
     monkeypatch.setattr(config, "CONFIG_FILE", tmp_path / "cfg.json")
-    monkeypatch.setattr(config, "load_settings", lambda path=None: {})
+    monkeypatch.setattr(config, "load", lambda path=None: {})
 
     called = []
 

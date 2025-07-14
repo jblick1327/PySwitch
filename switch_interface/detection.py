@@ -87,13 +87,5 @@ def detect_edges(
     )
 
 
-def __getattr__(name: str):
-    if name in {"listen", "check_device"}:
-        from . import compat
-
-        return getattr(compat, name)
-    raise AttributeError(name)
-
-
 
 

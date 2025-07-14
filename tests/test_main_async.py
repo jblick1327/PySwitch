@@ -47,7 +47,7 @@ def test_launch_continues_when_device_check_hangs(monkeypatch, caplog):
     monkeypatch.setattr("switch_interface.scan_engine.Scanner", DummyScanner)
     monkeypatch.setattr("switch_interface.pc_control.PCController", DummyPC)
     monkeypatch.setattr("switch_interface.kb_layout_io.load_keyboard", lambda p: "kb")
-    monkeypatch.setattr("switch_interface.detection.listen", lambda *a, **k: None)
+    monkeypatch.setattr("switch_interface.listener.listen", lambda *a, **k: None)
     monkeypatch.setattr(
         "switch_interface.listener.check_device", lambda *a, **k: time.sleep(5)
     )

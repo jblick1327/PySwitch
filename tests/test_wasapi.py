@@ -80,10 +80,6 @@ def test_listen_retries_shared_mode(monkeypatch):
     )
 
     wasapi = _reload_with_dummy_sd(monkeypatch, sd_mod)
-    import switch_interface.detection as detection
-
-    importlib.reload(detection)
-
     import switch_interface.listener as listener
 
     monkeypatch.setattr(
@@ -92,7 +88,7 @@ def test_listen_retries_shared_mode(monkeypatch):
         lambda _: (_ for _ in ()).throw(KeyboardInterrupt),
     )
 
-    detection.listen(lambda: None, samplerate=1, blocksize=1)
+    listener.listen(lambda: None, samplerate=1, blocksize=1)
 
     assert len(calls) == 2
     assert "extra_settings" in calls[0]
@@ -122,10 +118,6 @@ def test_listen_raises_runtime_error(monkeypatch):
     )
 
     wasapi = _reload_with_dummy_sd(monkeypatch, sd_mod)
-    import switch_interface.detection as detection
-
-    importlib.reload(detection)
-
     import switch_interface.listener as listener
 
     monkeypatch.setattr(
@@ -135,6 +127,6 @@ def test_listen_raises_runtime_error(monkeypatch):
     )
 
     with pytest.raises(RuntimeError):
-        detection.listen(lambda: None, samplerate=1, blocksize=1)
+        listener.listen(lambda: None, samplerate=1, blocksize=1)
 
     assert len(calls) == 2
