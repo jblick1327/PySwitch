@@ -7,7 +7,8 @@ import tkinter as tk
 from importlib import resources
 from pathlib import Path
 
-from . import __main__, calibration
+from . import __main__, calibration, config
+from .gui import FirstRunWizard
 
 LAYOUT_PACKAGE = "switch_interface.resources.layouts"
 
@@ -27,6 +28,14 @@ def main() -> None:
         print("launcher-main-invoked")
         return
 
+    settings = config.load_settings()
+    if os.getenv("SKIP_FIRST_RUN") != "1" and settings.get("calibration_complete") is False:
+        tmp_root = tk.Tk()
+        tmp_root.withdraw()
+        FirstRunWizard(tmp_root).show_modal()
+        tmp_root.destroy()
+        settings = config.load_settings()
+
     root = tk.Tk()
     root.title("Launch Switch Interface")
 
@@ -35,7 +44,7 @@ def main() -> None:
     if layout_paths:
         layout_var.set(layout_paths[0].name)
 
-    dwell_var = tk.DoubleVar(master=root, value=0.6)
+    dwell_var = tk.DoubleVar(master=root, value=settings.get("scan_interval", 0.6))
     rowcol_var = tk.BooleanVar(master=root, value=False)
 
     tk.Label(root, text="Layout").pack(padx=10, pady=(10, 0))
