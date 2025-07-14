@@ -16,6 +16,9 @@ def test_launch_continues_when_device_check_hangs(monkeypatch, caplog):
         def after_cancel(self, _id):
             pass
 
+        def protocol(self, name, cb):
+            pass
+
         def mainloop(self):
             events.append("mainloop")
 

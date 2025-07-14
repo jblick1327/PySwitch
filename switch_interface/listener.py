@@ -27,7 +27,7 @@ def check_device(*, samplerate: int = 44_100, blocksize: int = 256, device: int 
             callback=lambda *a: None,
         ):
             pass
-    except sd.PortAudioError as exc:
+    except Exception as exc:
         raise RuntimeError("Failed to open audio input device") from exc
 
 

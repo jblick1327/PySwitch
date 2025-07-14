@@ -106,13 +106,18 @@ def _select_backend(device: int | str | None) -> InputBackend:
     for b in _BACKENDS:
         try:
             if b.matches_hostapi(info):
-                log.debug("Selected backend %s for host API %s", b, info.get("name"))
+                log.debug(
+                    "Selected backend %s for host API %s", b, info.get("name")
+                )
                 return b
         except Exception:
             continue
-    raise RuntimeError(
-        f"No suitable audio back-end found for host API {info.get('name', hostapi_idx)}"
+
+    fallback = _BACKENDS[-1]
+    log.warning(
+        "No matching audio back-end for host API %s; using %s", info.get("name", hostapi_idx), fallback
     )
+    return fallback
 
 
 @contextlib.contextmanager
