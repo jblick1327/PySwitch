@@ -29,7 +29,7 @@ def main() -> None:
         return
 
     settings = config.load_settings()
-    if os.getenv("SKIP_FIRST_RUN") != "1" and settings.get("calibration_complete") is False:
+    if os.getenv("SKIP_FIRST_RUN") != "1" and not settings.get("calibration_complete"):
         tmp_root = tk.Tk()
         tmp_root.withdraw()
         FirstRunWizard(tmp_root).show_modal()

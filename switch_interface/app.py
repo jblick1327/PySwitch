@@ -12,7 +12,7 @@ def main() -> None:
     root = tk.Tk()
     root.withdraw()
     if os.getenv("SKIP_FIRST_RUN") != "1":
-        if settings.get("calibration_complete") is False:
+        if not settings.get("calibration_complete"):
             FirstRunWizard(root).show_modal()
             settings = config.load_settings()
     root.destroy()
