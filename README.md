@@ -65,6 +65,8 @@ the `SWITCH_EXCLUSIVEMODE` environment variable to `0` to force shared mode.
 
 Layouts live in `switch_interface/resources/layouts/`. Each JSON file defines `pages` containing rows of `keys`. Keys can specify a label and an action. The `pred_test.json` layout includes special `predict_word` and `predict_letter` keys that pull suggestions from the built‑in predictive text engine.
 
+See [docs/layouts.md](docs/layouts.md) for a detailed explanation of the format and examples.
+
 You can point `--layout` to any file in this format or set the `LAYOUT_PATH` environment variable.
 
 ## Logging
