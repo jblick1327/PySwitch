@@ -7,6 +7,7 @@ import contextlib
 from contextlib import suppress
 from pathlib import Path
 from tkinter import messagebox
+import logging
 
 import numpy as np
 import sounddevice as sd
@@ -36,7 +37,17 @@ def load_config(path: str | Path = CONFIG_FILE) -> "DetectorConfig":
         with open(path, "r", encoding="utf-8") as f:
             data = json.load(f)
         return DetectorConfig(**data)
-    except Exception:
+    except Exception as exc:  # pragma: no cover - depends on filesystem errors
+        logging.getLogger(__name__).exception(
+            "Failed to load calibration config: %s", path
+        )
+        messagebox.showerror(
+            "Error",
+            (
+                f"Could not read calibration file at {path}. "
+                "Delete this file or run calibration again to create a new one."
+            ),
+        )
         return DetectorConfig()
 
 

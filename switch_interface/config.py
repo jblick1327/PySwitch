@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
+import logging
+from tkinter import messagebox
 
 from appdirs import user_config_dir
 
@@ -24,7 +26,15 @@ def load(path: Path = CONFIG_FILE) -> dict:
     try:
         with open(path, "r", encoding="utf-8") as f:
             return json.load(f)
-    except Exception:
+    except Exception as exc:  # pragma: no cover - depends on filesystem errors
+        logging.getLogger(__name__).exception("Failed to load config: %s", path)
+        messagebox.showerror(
+            "Error",
+            (
+                f"Could not read configuration file at {path}. "
+                "Delete this file or run the application again to generate a new one."
+            ),
+        )
         return {}
 
 
@@ -32,7 +42,6 @@ def save(cfg: dict, path: Path = CONFIG_FILE) -> None:
     os.makedirs(path.parent, exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
         json.dump(cfg, f)
-
 
 
 def get_scan_interval(preset: str) -> float:
