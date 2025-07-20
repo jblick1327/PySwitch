@@ -23,6 +23,9 @@ pip install -r dev-requirements.txt
 
 The CI workflow performs the same two commands before running `ruff`, `mypy`, and `pytest`.
 
+See [ENVIRONMENT.md](ENVIRONMENT.md) for platform-specific PortAudio setup and
+examples of environment variables such as `SWITCH_EXCLUSIVEMODE`.
+
 ## Getting Started
 
 Clone the repository and install the dependencies in editable mode:
