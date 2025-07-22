@@ -1,0 +1,399 @@
+{
+    "metadata": {
+        "name": "Complete QWERTY Layout",
+        "description": "Comprehensive QWERTY keyboard layout with predictive text, numbers, punctuation, and common actions. Ideal for experienced users who need full typing functionality.",
+        "difficulty": "intermediate",
+        "features": [
+            "predictive_text",
+            "numbers",
+            "punctuation",
+            "symbols",
+            "actions",
+            "modifiers"
+        ],
+        "target_users": [
+            "experienced",
+            "power_users"
+        ],
+        "scan_complexity": "high"
+    },
+    "pages": [
+        {
+            "rows": [
+                {
+                    "stretch": true,
+                    "keys": [
+                        {
+                            "label": "",
+                            "action": "predict_word"
+                        },
+                        {
+                            "label": "",
+                            "action": "predict_word"
+                        },
+                        {
+                            "label": "",
+                            "action": "predict_word"
+                        }
+                    ]
+                },
+                {
+                    "keys": [
+                        {
+                            "label": "q"
+                        },
+                        {
+                            "label": "w"
+                        },
+                        {
+                            "label": "e"
+                        },
+                        {
+                            "label": "r"
+                        },
+                        {
+                            "label": "t"
+                        },
+                        {
+                            "label": "y"
+                        },
+                        {
+                            "label": "u"
+                        },
+                        {
+                            "label": "i"
+                        },
+                        {
+                            "label": "o"
+                        },
+                        {
+                            "label": "p"
+                        }
+                    ]
+                },
+                {
+                    "keys": [
+                        {
+                            "label": "a"
+                        },
+                        {
+                            "label": "s"
+                        },
+                        {
+                            "label": "d"
+                        },
+                        {
+                            "label": "f"
+                        },
+                        {
+                            "label": "g"
+                        },
+                        {
+                            "label": "h"
+                        },
+                        {
+                            "label": "j"
+                        },
+                        {
+                            "label": "k"
+                        },
+                        {
+                            "label": "l"
+                        }
+                    ]
+                },
+                {
+                    "keys": [
+                        {
+                            "label": "z"
+                        },
+                        {
+                            "label": "x"
+                        },
+                        {
+                            "label": "c"
+                        },
+                        {
+                            "label": "v"
+                        },
+                        {
+                            "label": "b"
+                        },
+                        {
+                            "label": "n"
+                        },
+                        {
+                            "label": "m"
+                        }
+                    ]
+                },
+                {
+                    "keys": [
+                        {
+                            "label": "1"
+                        },
+                        {
+                            "label": "2"
+                        },
+                        {
+                            "label": "3"
+                        },
+                        {
+                            "label": "4"
+                        },
+                        {
+                            "label": "5"
+                        },
+                        {
+                            "label": "6"
+                        },
+                        {
+                            "label": "7"
+                        },
+                        {
+                            "label": "8"
+                        },
+                        {
+                            "label": "9"
+                        },
+                        {
+                            "label": "0"
+                        }
+                    ]
+                },
+                {
+                    "stretch": true,
+                    "keys": [
+                        {
+                            "label": "Space",
+                            "action": "space"
+                        },
+                        {
+                            "label": "⌫",
+                            "action": "backspace"
+                        },
+                        {
+                            "label": "Enter",
+                            "action": "enter"
+                        },
+                        {
+                            "label": "Caps",
+                            "action": "caps_lock",
+                            "mode": "toggle"
+                        }
+                    ]
+                },
+                {
+                    "keys": [
+                        {
+                            "label": ".",
+                            "action": "period"
+                        },
+                        {
+                            "label": ",",
+                            "action": "comma"
+                        },
+                        {
+                            "label": "?",
+                            "action": "question"
+                        },
+                        {
+                            "label": "!",
+                            "action": "exclamation"
+                        },
+                        {
+                            "label": "'",
+                            "action": "apostrophe"
+                        }
+                    ]
+                },
+                {
+                    "keys": [
+                        {
+                            "label": ":",
+                            "action": "colon"
+                        },
+                        {
+                            "label": ";",
+                            "action": "semicolon"
+                        },
+                        {
+                            "label": "\"",
+                            "action": "quote"
+                        },
+                        {
+                            "label": "-",
+                            "action": "hyphen"
+                        },
+                        {
+                            "label": "_",
+                            "action": "underscore"
+                        }
+                    ]
+                },
+                {
+                    "keys": [
+                        {
+                            "label": "(",
+                            "action": "left_paren"
+                        },
+                        {
+                            "label": ")",
+                            "action": "right_paren"
+                        },
+                        {
+                            "label": "[",
+                            "action": "left_bracket"
+                        },
+                        {
+                            "label": "]",
+                            "action": "right_bracket"
+                        },
+                        {
+                            "label": "{",
+                            "action": "left_brace"
+                        }
+                    ]
+                },
+                {
+                    "keys": [
+                        {
+                            "label": "}",
+                            "action": "right_brace"
+                        },
+                        {
+                            "label": "<",
+                            "action": "less_than"
+                        },
+                        {
+                            "label": ">",
+                            "action": "greater_than"
+                        },
+                        {
+                            "label": "/",
+                            "action": "forward_slash"
+                        },
+                        {
+                            "label": "\\",
+                            "action": "backslash"
+                        }
+                    ]
+                },
+                {
+                    "keys": [
+                        {
+                            "label": "@",
+                            "action": "at_sign"
+                        },
+                        {
+                            "label": "#",
+                            "action": "hash"
+                        },
+                        {
+                            "label": "$",
+                            "action": "dollar"
+                        },
+                        {
+                            "label": "%",
+                            "action": "percent"
+                        },
+                        {
+                            "label": "^",
+                            "action": "caret"
+                        }
+                    ]
+                },
+                {
+                    "keys": [
+                        {
+                            "label": "&",
+                            "action": "ampersand"
+                        },
+                        {
+                            "label": "*",
+                            "action": "asterisk"
+                        },
+                        {
+                            "label": "+",
+                            "action": "plus"
+                        },
+                        {
+                            "label": "=",
+                            "action": "equals"
+                        },
+                        {
+                            "label": "|",
+                            "action": "pipe"
+                        }
+                    ]
+                },
+                {
+                    "stretch": true,
+                    "keys": [
+                        {
+                            "label": "Tab",
+                            "action": "tab"
+                        },
+                        {
+                            "label": "Shift",
+                            "action": "shift",
+                            "mode": "latch"
+                        },
+                        {
+                            "label": "Ctrl",
+                            "action": "ctrl",
+                            "mode": "latch"
+                        },
+                        {
+                            "label": "Alt",
+                            "action": "alt",
+                            "mode": "latch"
+                        }
+                    ]
+                },
+                {
+                    "stretch": true,
+                    "keys": [
+                        {
+                            "label": "Esc",
+                            "action": "escape"
+                        },
+                        {
+                            "label": "Del",
+                            "action": "delete"
+                        },
+                        {
+                            "label": "Home",
+                            "action": "home"
+                        },
+                        {
+                            "label": "End",
+                            "action": "end"
+                        }
+                    ]
+                },
+                {
+                    "stretch": true,
+                    "keys": [
+                        {
+                            "label": "Page Up",
+                            "action": "page_up"
+                        },
+                        {
+                            "label": "Page Down",
+                            "action": "page_down"
+                        },
+                        {
+                            "label": "Copy",
+                            "action": "copy"
+                        },
+                        {
+                            "label": "Paste",
+                            "action": "paste"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

@@ -31,7 +31,7 @@ def _open_log_if_exists() -> None:
 
 
 def keyboard_main(argv: list[str] | None = None) -> None:
-    """Launch the scanning keyboard interface."""
+    """Launch the scanning keyboard interface with enhanced error handling."""
     parser = argparse.ArgumentParser(
         description="Run the switch-accessible virtual keyboard",
     )
@@ -59,54 +59,105 @@ def keyboard_main(argv: list[str] | None = None) -> None:
 
     args = parser.parse_args(argv)
 
-    from .calibration import calibrate, load_config, save_config
-    from .listener import check_device, listen
-    from .kb_gui import VirtualKeyboard
-    from .kb_layout_io import load_keyboard
-    from .pc_control import PCController
-    from .scan_engine import Scanner
+    try:
+        from .calibration import calibrate, load_config, save_config
+        from .listener import check_device, listen
+        from .kb_gui import VirtualKeyboard
+        from .kb_layout_io import load_keyboard
+        from .pc_control import PCController
+        from .scan_engine import Scanner
+        from .error_handler import error_handler
+    except ImportError as e:
+        # Critical startup error - missing required modules
+        raise RuntimeError(f"Failed to import required modules: {e}") from e
 
-    cfg = load_config()
+    # Load configuration with error handling
+    try:
+        cfg = load_config()
+    except Exception as e:
+        raise RuntimeError(f"Failed to load configuration: {e}") from e
+        
     if args.calibrate:
-        cfg = calibrate(cfg)
-        save_config(cfg)
+        try:
+            cfg = calibrate(cfg)
+            save_config(cfg)
+        except Exception as e:
+            raise RuntimeError(f"Calibration failed: {e}") from e
 
+    # Audio device verification with enhanced error handling and fallback
     ready = threading.Event()
+    audio_error = None
+    working_device = None
 
     def _verify() -> None:
+        nonlocal audio_error, working_device
         try:
-            check_device(
+            # First try the configured device with fallback
+            from .listener import check_device_with_fallback
+            working_device, error = check_device_with_fallback(
                 samplerate=cfg.samplerate,
                 blocksize=cfg.blocksize,
                 device=cfg.device,
             )
-        except Exception as e:  # pragma: no cover - just logs
+            
+            if working_device is None:
+                audio_error = RuntimeError(f"No working audio device found: {error}")
+            else:
+                # Update config with working device if different
+                if working_device != cfg.device:
+                    logging.info(f"Using fallback audio device: {working_device}")
+                    cfg.device = working_device
+                    
+        except Exception as e:
+            audio_error = e
             logging.warning(
-                "Audio check failed: %s \u2013 continuing in shared mode", e
+                "Audio check failed: %s \u2013 will attempt fallback during startup", e
             )
         finally:
             ready.set()
 
     threading.Thread(target=_verify, daemon=True).start()
-    if not ready.wait(2.0):
+    if not ready.wait(3.0):  # Increased timeout for fallback testing
         logging.warning(
-            "Audio device check timed out \u2013 proceeding without exclusive access"
+            "Audio device check timed out \u2013 will attempt fallback during startup"
         )
+        audio_error = RuntimeError("Audio device check timed out")
 
+    # Only raise error if no devices are available at all
+    if audio_error and working_device is None:
+        # Check if it's a critical "no device" error
+        error_str = str(audio_error).lower()
+        if "no device" in error_str or "no working audio" in error_str:
+            raise RuntimeError(f"No audio input device available: {audio_error}") from audio_error
+        else:
+            # Non-critical error, log and continue
+            logging.warning(f"Audio device check had issues but will continue: {audio_error}")
+
+    # Load keyboard layout with better error handling
     pc_controller = PCController()
     try:
         keyboard = load_keyboard(args.layout)
-    except FileNotFoundError:
-        parser.error(f"Layout file '{args.layout}' not found")
-    except json.JSONDecodeError as exc:
-        parser.error(f"Invalid JSON in layout file '{args.layout}': {exc.msg}")
+    except FileNotFoundError as e:
+        raise RuntimeError(f"Layout file '{args.layout}' not found. Check that the file exists and is accessible.") from e
+    except json.JSONDecodeError as e:
+        raise RuntimeError(f"Invalid JSON in layout file '{args.layout}': {e.msg}. Check the file format.") from e
+    except Exception as e:
+        raise RuntimeError(f"Failed to load keyboard layout '{args.layout}': {e}") from e
 
-    vk = VirtualKeyboard(
-        keyboard, on_key=pc_controller.on_key, state=pc_controller.state
-    )
+    # Create virtual keyboard with error handling
+    try:
+        vk = VirtualKeyboard(
+            keyboard, on_key=pc_controller.on_key, state=pc_controller.state
+        )
+    except Exception as e:
+        raise RuntimeError(f"Failed to create virtual keyboard interface: {e}") from e
 
-    scanner = Scanner(vk, dwell=args.dwell, row_column_scan=args.row_column)
-    scanner.start()
+    # Initialize scanner with error handling
+    try:
+        scanner = Scanner(vk, dwell=args.dwell, row_column_scan=args.row_column)
+        scanner.start()
+    except Exception as e:
+        raise RuntimeError(f"Failed to initialize scanning system: {e}") from e
 
     press_queue: SimpleQueue[None] = SimpleQueue()
     shutdown = threading.Event()
@@ -129,14 +180,26 @@ def keyboard_main(argv: list[str] | None = None) -> None:
         scanner.stop()
         vk.root.destroy()
 
-    threading.Thread(
-        target=listen,
-        args=(_on_switch, cfg),
-        daemon=True,
-    ).start()
-    vk.root.protocol("WM_DELETE_WINDOW", _on_close)
-    vk.root.after(10, _pump_queue)
-    vk.run()
+    # Start audio listener with error handling
+    try:
+        threading.Thread(
+            target=listen,
+            args=(_on_switch, cfg),
+            daemon=True,
+        ).start()
+    except Exception as e:
+        raise RuntimeError(f"Failed to start audio listener: {e}") from e
+
+    # Set up GUI and start main loop
+    try:
+        vk.root.protocol("WM_DELETE_WINDOW", _on_close)
+        vk.root.after(10, _pump_queue)
+        vk.run()
+    except Exception as e:
+        # Clean up on GUI error
+        shutdown.set()
+        scanner.stop()
+        raise RuntimeError(f"GUI error during operation: {e}") from e
 
 
 def main(argv: list[str] | None = None) -> None:

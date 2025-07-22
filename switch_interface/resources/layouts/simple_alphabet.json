@@ -1,0 +1,136 @@
+{
+  "metadata": {
+    "name": "Simple Alphabet Layout",
+    "description": "Beginner-friendly alphabetical layout with predictive text support. Letters are arranged in alphabetical order for easy learning, with essential punctuation and actions.",
+    "difficulty": "beginner",
+    "features": ["predictive_text", "alphabetical_order", "basic_punctuation", "word_prediction"],
+    "target_users": ["beginners", "new_users", "learning"],
+    "scan_complexity": "low"
+  },
+  "pages": [
+    {
+      "rows": [
+        {
+          "stretch": true,
+          "keys": [
+            {"label": "", "action": "predict_word"},
+            {"label": "", "action": "predict_word"},
+            {"label": "", "action": "predict_word"},
+            {"label": "", "action": "predict_word"}
+          ]
+        },
+        {
+          "stretch": true,
+          "keys": [
+            {"label": "", "action": "predict_letter"},
+            {"label": "", "action": "predict_letter"},
+            {"label": "", "action": "predict_letter"}
+          ]
+        },
+        {
+          "keys": [
+            {"label": "a"}, {"label": "b"}, {"label": "c"}, {"label": "d"}, {"label": "e"}
+          ]
+        },
+        {
+          "keys": [
+            {"label": "f"}, {"label": "g"}, {"label": "h"}, {"label": "i"}, {"label": "j"}
+          ]
+        },
+        {
+          "keys": [
+            {"label": "k"}, {"label": "l"}, {"label": "m"}, {"label": "n"}, {"label": "o"}
+          ]
+        },
+        {
+          "keys": [
+            {"label": "p"}, {"label": "q"}, {"label": "r"}, {"label": "s"}, {"label": "t"}
+          ]
+        },
+        {
+          "keys": [
+            {"label": "u"}, {"label": "v"}, {"label": "w"}, {"label": "x"}, {"label": "y"}
+          ]
+        },
+        {
+          "stretch": true,
+          "keys": [
+            {"label": "z"},
+            {"label": "Space", "action": "space"},
+            {"label": "⌫", "action": "backspace"},
+            {"label": "Enter", "action": "enter"}
+          ]
+        },
+        {
+          "keys": [
+            {"label": ".", "action": "period"},
+            {"label": ",", "action": "comma"},
+            {"label": "?", "action": "question"},
+            {"label": "!", "action": "exclamation"},
+            {"label": "'", "action": "apostrophe"}
+          ]
+        },
+        {
+          "keys": [
+            {"label": "1"}, {"label": "2"}, {"label": "3"}, {"label": "4"}, {"label": "5"}
+          ]
+        },
+        {
+          "keys": [
+            {"label": "6"}, {"label": "7"}, {"label": "8"}, {"label": "9"}, {"label": "0"}
+          ]
+        },
+        {
+          "stretch": true,
+          "keys": [
+            {"label": "Caps", "action": "caps_lock", "mode": "toggle"},
+            {"label": "Tab", "action": "tab"},
+            {"label": "Copy", "action": "copy"},
+            {"label": "Paste", "action": "paste"}
+          ]
+        },
+        {
+          "stretch": true,
+          "keys": [
+            {"label": "Next Page", "action": "next_page"},
+            {"label": "Help", "action": "help"}
+          ]
+        }
+      ]
+    },
+    {
+      "rows": [
+        {
+          "stretch": true,
+          "keys": [
+            {"label": "Common Phrases", "action": "header"}
+          ]
+        },
+        {
+          "stretch": true,
+          "keys": [
+            {"label": "Hello"},
+            {"label": "Thank you"},
+            {"label": "Yes"},
+            {"label": "No"}
+          ]
+        },
+        {
+          "stretch": true,
+          "keys": [
+            {"label": "Please"},
+            {"label": "I need help"},
+            {"label": "I'm fine"},
+            {"label": "Goodbye"}
+          ]
+        },
+        {
+          "stretch": true,
+          "keys": [
+            {"label": "Previous Page", "action": "prev_page"}
+          ]
+        }
+      ]
+    }
+  ]
+}

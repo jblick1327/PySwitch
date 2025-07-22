@@ -73,7 +73,55 @@ class Action(str, Enum):
     reset_scan_row = auto()  # move scanner back to first key in row
     predict_word = auto()  # predictive text (common‑word) key placeholder
     predict_letter = auto()  # predictive text (common-letter) key placeholder
-    # add your own
+    
+    # Common punctuation and symbols
+    period = auto()
+    comma = auto()
+    question = auto()
+    exclamation = auto()
+    apostrophe = auto()
+    colon = auto()
+    semicolon = auto()
+    quote = auto()
+    hyphen = auto()
+    underscore = auto()
+    left_paren = auto()
+    right_paren = auto()
+    left_bracket = auto()
+    right_bracket = auto()
+    left_brace = auto()
+    right_brace = auto()
+    less_than = auto()
+    greater_than = auto()
+    forward_slash = auto()
+    backslash = auto()
+    at_sign = auto()
+    hash = auto()
+    dollar = auto()
+    percent = auto()
+    caret = auto()
+    ampersand = auto()
+    asterisk = auto()
+    plus = auto()
+    equals = auto()
+    pipe = auto()
+    
+    # Common actions
+    copy = auto()
+    paste = auto()
+    cut = auto()
+    undo = auto()
+    redo = auto()
+    select_all = auto()
+    escape = auto()
+    
+    # Navigation
+    next_page = auto()  # Alias for page_next for clarity
+    prev_page = auto()  # Alias for page_prev for clarity
+    
+    # UI elements
+    header = auto()  # Non-interactive header/label
+    help = auto()  # Show help information
 
     _VIRTUAL_ACTIONS = {
         "page_next",
@@ -81,6 +129,10 @@ class Action(str, Enum):
         "reset_scan_row",
         "predict_word",
         "predict_letter",
+        "next_page",
+        "prev_page",
+        "header",
+        "help"
     }
 
     def is_virtual(self) -> bool:

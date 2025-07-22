@@ -6,6 +6,12 @@ row of keys.
 
 ```json
 {
+  "metadata": {
+    "name": "Layout Name",
+    "description": "Layout description",
+    "difficulty": "beginner",
+    "features": ["feature1", "feature2"]
+  },
   "pages": [
     {
       "rows": [
@@ -17,6 +23,32 @@ row of keys.
       ]
     }
   ]
+}
+```
+
+## Layout Metadata
+
+Each layout can include a `metadata` section that describes its characteristics:
+
+- `name` - Display name of the layout
+- `description` - Detailed description of the layout and its purpose
+- `difficulty` - One of: "beginner", "intermediate", "advanced"
+- `features` - Array of features the layout provides (e.g., "predictive_text", "numbers", "punctuation")
+- `target_users` - (Optional) Array of intended user types (e.g., "beginners", "power_users")
+- `scan_complexity` - (Optional) Complexity level: "low", "medium", "high"
+
+Example metadata from `qwerty_full.json`:
+
+```json
+{
+  "metadata": {
+    "name": "Complete QWERTY Layout",
+    "description": "Comprehensive QWERTY keyboard layout with predictive text, numbers, punctuation, and common actions.",
+    "difficulty": "intermediate",
+    "features": ["predictive_text", "numbers", "punctuation", "symbols", "actions"],
+    "target_users": ["experienced", "power_users"],
+    "scan_complexity": "high"
+  }
 }
 ```
 

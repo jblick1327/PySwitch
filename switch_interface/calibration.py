@@ -8,6 +8,8 @@ from contextlib import suppress
 from pathlib import Path
 from tkinter import messagebox
 import logging
+import threading
+import time
 
 import numpy as np
 import sounddevice as sd
@@ -58,10 +60,29 @@ def save_config(config: "DetectorConfig", path: str | Path = CONFIG_FILE) -> Non
         json.dump(asdict(config), f)
 
 
-def calibrate(config: DetectorConfig | None = None) -> DetectorConfig:
-    """Launch a simple UI to adjust detector settings."""
+def calibrate(
+    config: DetectorConfig | None = None, 
+    parent: tk.Tk | tk.Toplevel | None = None,
+    on_complete: callable = None
+) -> DetectorConfig:
+    """Launch a simple UI to adjust detector settings.
+    
+    Args:
+        config: Initial detector configuration
+        parent: Parent window (None to create a new Tk instance)
+        on_complete: Callback function when calibration completes
+    
+    Returns:
+        DetectorConfig: Updated detector configuration
+    """
     config = config or DetectorConfig()
-    root = tk.Tk()
+    
+    # Create root window if no parent provided
+    if parent is None:
+        root = tk.Tk()
+    else:
+        root = tk.Toplevel(parent)
+    
     root.title("Calibrate Detector")
 
     u_var = tk.DoubleVar(master=root, value=config.upper_offset)
@@ -212,6 +233,46 @@ def calibrate(config: DetectorConfig | None = None) -> DetectorConfig:
     def _start_stream() -> None:
         nonlocal stream
         nonlocal stream_cm, stream
+        
+        # Try with fallback mechanism
+        from .audio_device_manager import AudioDeviceManager
+        
+        manager = AudioDeviceManager()
+        device_id = dev_var.get() or None
+        
+        # Try to find a working device with fallback
+        working_device, error, mode = manager.find_working_device(
+            device_id, 
+            samplerate=int(sr_var.get()),
+            blocksize=int(bs_var.get())
+        )
+        
+        if working_device is not None:
+            # Update device selection if different from original
+            if working_device != device_id:
+                dev_var.set(str(working_device) if working_device is not None else "")
+                messagebox.showinfo(
+                    "Device Changed",
+                    f"Using alternative audio device: {working_device}"
+                )
+            
+            try:
+                # Use the working device
+                stream_cm = open_input(
+                    samplerate=int(sr_var.get()),
+                    blocksize=int(bs_var.get()),
+                    channels=1,
+                    dtype="float32",
+                    callback=_callback,
+                    device=working_device,
+                )
+                stream = stream_cm.__enter__()
+                return
+            except Exception:
+                # Continue to fallback approach
+                pass
+        
+        # Original approach as fallback
         try:
             stream_cm = open_input(
                 samplerate=int(sr_var.get()),
@@ -267,18 +328,57 @@ def calibrate(config: DetectorConfig | None = None) -> DetectorConfig:
         nonlocal result
         try:
             _start_stream()
-        except RuntimeError:
+        except RuntimeError as exc:
             root.withdraw()
-            messagebox.showerror(
+            retry = messagebox.askretrycancel(
                 "Error",
-                "Could not read switch",
+                f"Could not read switch: {exc}\n\nWould you like to try again with a different device?",
                 parent=root,
             )
-            if _update_id is not None and hasattr(root, "after_cancel"):
-                root.after_cancel(_update_id)
-            root.destroy()
-            result = config
-            return
+            if retry:
+                # Try to find another working device
+                from .audio_device_manager import AudioDeviceManager
+                manager = AudioDeviceManager()
+                working_device, error, mode = manager.find_working_device(None)
+                
+                if working_device is not None:
+                    dev_var.set(str(working_device) if working_device is not None else "")
+                    messagebox.showinfo(
+                        "Device Changed",
+                        f"Trying with alternative audio device: {working_device}",
+                        parent=root
+                    )
+                    try:
+                        _start_stream()
+                    except RuntimeError:
+                        messagebox.showerror(
+                            "Error",
+                            "Could not read switch with alternative device",
+                            parent=root,
+                        )
+                        if _update_id is not None and hasattr(root, "after_cancel"):
+                            root.after_cancel(_update_id)
+                        root.destroy()
+                        result = config
+                        return
+                else:
+                    messagebox.showerror(
+                        "Error",
+                        "No working audio devices found",
+                        parent=root,
+                    )
+                    if _update_id is not None and hasattr(root, "after_cancel"):
+                        root.after_cancel(_update_id)
+                    root.destroy()
+                    result = config
+                    return
+            else:
+                if _update_id is not None and hasattr(root, "after_cancel"):
+                    root.after_cancel(_update_id)
+                root.destroy()
+                result = config
+                return
+                
         result = DetectorConfig(
             upper_offset=u_var.get(),
             lower_offset=l_var.get(),
@@ -287,12 +387,86 @@ def calibrate(config: DetectorConfig | None = None) -> DetectorConfig:
             debounce_ms=db_var.get(),
             device=dev_var.get() or None,
         )
+        
+        # Validate the calibration
+        if not validate_calibration(result):
+            retry = messagebox.askretrycancel(
+                "Warning",
+                "Calibration settings may not be optimal. Would you like to try again?",
+                parent=root,
+            )
+            if retry:
+                return
+        
         _stop_stream()
         if _update_id is not None and hasattr(root, "after_cancel"):
             root.after_cancel(_update_id)
+        
+        # Call completion callback if provided
+        if on_complete is not None:
+            on_complete(result)
+            
         root.destroy()
 
-    tk.Button(root, text="Start", command=_start).pack(pady=10)
+    # Create button frame for multiple buttons
+    button_frame = tk.Frame(root)
+    button_frame.pack(pady=10)
+    
+    # Start button
+    tk.Button(button_frame, text="Start", command=_start).pack(side=tk.LEFT, padx=5)
+    
+    # Auto-calibration button
+    def _auto_calibrate():
+        _stop_stream()
+        try:
+            device_id = dev_var.get() or None
+            messagebox.showinfo(
+                "Auto Calibration",
+                "Press your switch 3-5 times when prompted.\nCalibration will begin in 2 seconds.",
+                parent=root
+            )
+            root.update()
+            import time
+            time.sleep(2)
+            
+            try:
+                auto_settings = run_auto_calibration(device_id)
+                
+                # Update UI with auto-calibration results
+                u_var.set(auto_settings["upper_offset"])
+                l_var.set(auto_settings["lower_offset"])
+                db_var.set(auto_settings["debounce_ms"])
+                sr_var.set(str(auto_settings["samplerate"]))
+                bs_var.set(str(auto_settings["blocksize"]))
+                if auto_settings["device"] is not None:
+                    dev_var.set(str(auto_settings["device"]))
+                
+                messagebox.showinfo(
+                    "Auto Calibration",
+                    "Auto-calibration complete! You can now test these settings.",
+                    parent=root
+                )
+                
+                # Restart stream with new settings
+                _restart_stream()
+                
+            except Exception as exc:
+                messagebox.showerror(
+                    "Auto Calibration Error",
+                    f"Auto-calibration failed: {exc}",
+                    parent=root
+                )
+                # Restart stream with original settings
+                _restart_stream()
+                
+        except Exception as exc:
+            messagebox.showerror(
+                "Error",
+                f"Auto-calibration failed: {exc}",
+                parent=root
+            )
+    
+    tk.Button(button_frame, text="Auto-Calibrate", command=_auto_calibrate).pack(side=tk.LEFT, padx=5)
 
     def _on_close() -> None:
         _stop_stream()
@@ -309,28 +483,162 @@ def calibrate(config: DetectorConfig | None = None) -> DetectorConfig:
     return result
 
 
-def run_auto_calibration(device_id: int | str | None = None) -> dict:
-    """Record a short sample from ``device_id`` and return calibration settings."""
+def run_auto_calibration(
+    device_id: int | str | None = None, 
+    max_attempts: int = 3,
+    timeout_seconds: float = 5.0
+) -> dict:
+    """Record a short sample from ``device_id`` and return calibration settings.
+    
+    Args:
+        device_id: Audio device ID or name
+        max_attempts: Maximum number of calibration attempts
+        timeout_seconds: Maximum time to wait for recording
+        
+    Returns:
+        dict: Calibration settings
+        
+    Raises:
+        RuntimeError: If calibration fails after max_attempts
+    """
+    import threading
+    from .audio_device_manager import AudioDeviceManager
+    
     duration = 3
     samplerate = 44_100
     blocksize = 256
-    stream = sd.rec(
-        int(duration * samplerate),
-        samplerate=samplerate,
-        channels=1,
-        dtype="float32",
-        device=device_id,
+    
+    # Try to find a working device if the provided one fails
+    manager = AudioDeviceManager()
+    working_device, error, mode = manager.find_working_device(
+        device_id, samplerate, blocksize
     )
-    sd.wait()
-    samples = stream.reshape(-1)
-    from .auto_calibration import calibrate
+    
+    if working_device is not None:
+        device_id = working_device
+    
+    # Function to run calibration with timeout
+    def run_calibration_with_timeout() -> dict:
+        # Use a flag to track completion
+        calibration_complete = threading.Event()
+        calibration_result = [None]
+        calibration_error = [None]
+        
+        def record_thread():
+            try:
+                stream = sd.rec(
+                    int(duration * samplerate),
+                    samplerate=samplerate,
+                    channels=1,
+                    dtype="float32",
+                    device=device_id,
+                )
+                sd.wait()
+                samples = stream.reshape(-1)
+                from .auto_calibration import calibrate
+                
+                res = calibrate(samples, samplerate)
+                
+                # Store result and signal completion
+                calibration_result[0] = {
+                    "upper_offset": res.upper_offset,
+                    "lower_offset": res.lower_offset,
+                    "debounce_ms": res.debounce_ms,
+                    "samplerate": samplerate,
+                    "blocksize": blocksize,
+                    "device": device_id,
+                    "calib_ok": res.calib_ok
+                }
+                calibration_complete.set()
+            except Exception as exc:
+                calibration_error[0] = exc
+                calibration_complete.set()
+        
+        # Start recording thread
+        thread = threading.Thread(target=record_thread)
+        thread.daemon = True
+        thread.start()
+        
+        # Wait for completion or timeout
+        if not calibration_complete.wait(timeout_seconds):
+            raise TimeoutError(f"Calibration timed out after {timeout_seconds} seconds")
+        
+        # Check for errors
+        if calibration_error[0] is not None:
+            raise calibration_error[0]
+        
+        # Return result
+        return calibration_result[0]
+    
+    # Try calibration with retries
+    last_error = None
+    for attempt in range(max_attempts):
+        try:
+            result = run_calibration_with_timeout()
+            
+            # Validate calibration result
+            if result.get("calib_ok", False):
+                return result
+            else:
+                # Try again if calibration quality is poor
+                last_error = RuntimeError("Calibration quality check failed")
+                continue
+                
+        except Exception as exc:
+            last_error = exc
+            logging.getLogger(__name__).warning(
+                f"Calibration attempt {attempt+1}/{max_attempts} failed: {exc}"
+            )
+            
+            # Try with a different device on next attempt
+            if attempt < max_attempts - 1:
+                # Find another device to try
+                available_devices = manager.get_available_input_devices()
+                for device_info in available_devices:
+                    if device_info["index"] != device_id:
+                        device_id = device_info["index"]
+                        logging.getLogger(__name__).info(
+                            f"Trying alternative device for calibration: {device_id}"
+                        )
+                        break
+    
+    # If we get here, all attempts failed
+    raise RuntimeError(f"Calibration failed after {max_attempts} attempts: {last_error}")
 
-    res = calibrate(samples, samplerate)
-    return {
-        "upper_offset": res.upper_offset,
-        "lower_offset": res.lower_offset,
-        "debounce_ms": res.debounce_ms,
-        "samplerate": samplerate,
-        "blocksize": blocksize,
-        "device": device_id,
-    }
+
+def validate_calibration(config: DetectorConfig) -> bool:
+    """Validate calibration settings to ensure they work.
+    
+    Args:
+        config: Detector configuration to validate
+        
+    Returns:
+        bool: True if calibration is valid
+    """
+    # Check for valid threshold values
+    if config.upper_offset >= 0 or config.lower_offset >= 0:
+        return False
+    
+    # Ensure upper threshold is higher than lower threshold
+    if config.upper_offset <= config.lower_offset:
+        return False
+    
+    # Check for reasonable debounce time
+    if config.debounce_ms < 10 or config.debounce_ms > 200:
+        return False
+    
+    # Check for valid sample rate
+    if config.samplerate not in [8000, 16000, 22050, 32000, 44100, 48000, 88200, 96000]:
+        return False
+    
+    # Check if device is available (if specified)
+    if config.device is not None:
+        from .audio_device_manager import AudioDeviceManager
+        manager = AudioDeviceManager()
+        valid, _, _ = manager.validate_device_settings(
+            config.device, config.samplerate, config.blocksize
+        )
+        if not valid:
+            return False
+    
+    return True
