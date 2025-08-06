@@ -12,7 +12,7 @@ import logging
 import traceback
 from typing import Optional
 
-from . import __main__, calibration, config
+from . import __main__, calibration, settings
 from .gui import FirstRunWizard
 from .error_handler import error_handler, ErrorSeverity
 
@@ -51,7 +51,7 @@ class EnhancedLauncher:
         self.root.resizable(False, False)
         
         # Load settings
-        settings = config.load()
+        cfg = settings.load()
         
         # Layout selection
         layout_paths = list_layouts()
@@ -65,7 +65,7 @@ class EnhancedLauncher:
         )
 
         # Dwell time setting
-        self.dwell_var = tk.DoubleVar(master=self.root, value=settings.get("scan_interval", 0.6))
+        self.dwell_var = tk.DoubleVar(master=self.root, value=settings.get_scan_interval(cfg))
         tk.Label(self.root, text="Dwell time (s)").pack(padx=10, pady=(10, 0))
         tk.Scale(
             self.root,
@@ -285,14 +285,14 @@ def main() -> None:
         return
 
     # Handle first run wizard
-    settings = config.load()
-    if os.getenv("SKIP_FIRST_RUN") != "1" and not settings.get("calibration_complete"):
+    cfg = settings.load()
+    if os.getenv("SKIP_FIRST_RUN") != "1" and not cfg.app.calibration_complete:
         try:
             tmp_root = tk.Tk()
             tmp_root.withdraw()
             FirstRunWizard(tmp_root).show_modal()
             tmp_root.destroy()
-            settings = config.load()
+            cfg = settings.load()
         except Exception as e:
             # If first run wizard fails, continue to launcher with error info
             logging.error(f"First run wizard failed: {e}")

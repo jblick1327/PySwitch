@@ -60,7 +60,7 @@ def keyboard_main(argv: list[str] | None = None) -> None:
     args = parser.parse_args(argv)
 
     try:
-        from .calibration import calibrate, load_config, save_config
+        from . import calibration, settings
         from .listener import check_device, listen
         from .kb_gui import VirtualKeyboard
         from .kb_layout_io import load_keyboard
@@ -73,14 +73,30 @@ def keyboard_main(argv: list[str] | None = None) -> None:
 
     # Load configuration with error handling
     try:
-        cfg = load_config()
+        cfg = settings.load()
     except Exception as e:
         raise RuntimeError(f"Failed to load configuration: {e}") from e
         
     if args.calibrate:
         try:
-            cfg = calibrate(cfg)
-            save_config(cfg)
+            detector_config = calibration.DetectorConfig(
+                upper_offset=cfg.calibration.upper_offset,
+                lower_offset=cfg.calibration.lower_offset,
+                samplerate=cfg.calibration.samplerate,
+                blocksize=cfg.calibration.blocksize,
+                debounce_ms=cfg.calibration.debounce_ms,
+                device=cfg.audio.device
+            )
+            detector_config = calibration.calibrate(detector_config)
+            # Update settings with calibration results
+            cfg.calibration.upper_offset = detector_config.upper_offset
+            cfg.calibration.lower_offset = detector_config.lower_offset
+            cfg.calibration.samplerate = detector_config.samplerate
+            cfg.calibration.blocksize = detector_config.blocksize
+            cfg.calibration.debounce_ms = detector_config.debounce_ms
+            if detector_config.device:
+                cfg.audio.device = detector_config.device
+            settings.save(cfg)
         except Exception as e:
             raise RuntimeError(f"Calibration failed: {e}") from e
 
@@ -95,18 +111,19 @@ def keyboard_main(argv: list[str] | None = None) -> None:
             # First try the configured device with fallback
             from .listener import check_device_with_fallback
             working_device, error = check_device_with_fallback(
-                samplerate=cfg.samplerate,
-                blocksize=cfg.blocksize,
-                device=cfg.device,
+                samplerate=cfg.calibration.samplerate,
+                blocksize=cfg.calibration.blocksize,
+                device=cfg.audio.device,
             )
             
             if working_device is None:
                 audio_error = RuntimeError(f"No working audio device found: {error}")
             else:
                 # Update config with working device if different
-                if working_device != cfg.device:
+                if working_device != cfg.audio.device:
                     logging.info(f"Using fallback audio device: {working_device}")
-                    cfg.device = working_device
+                    cfg.audio.device = working_device
+                    cfg.audio.last_working_device = working_device
                     
         except Exception as e:
             audio_error = e
@@ -184,7 +201,16 @@ def keyboard_main(argv: list[str] | None = None) -> None:
     try:
         threading.Thread(
             target=listen,
-            args=(_on_switch, cfg),
+            args=(_on_switch,),
+            kwargs={
+                "upper_offset": cfg.calibration.upper_offset,
+                "lower_offset": cfg.calibration.lower_offset,
+                "samplerate": cfg.calibration.samplerate,
+                "blocksize": cfg.calibration.blocksize,
+                "debounce_ms": cfg.calibration.debounce_ms,
+                "device": cfg.audio.device,
+                "device_mode": cfg.audio.device_mode,
+            },
             daemon=True,
         ).start()
     except Exception as e:

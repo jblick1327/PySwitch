@@ -7,7 +7,7 @@ from typing import Literal
 
 import sounddevice as sd
 
-from . import calibration, config
+from . import calibration, settings
 
 
 class FirstRunWizard(tk.Toplevel):
@@ -627,24 +627,28 @@ If you continue to have problems, you can skip calibration and use default setti
     # ---------- finish ----------
     def _finish(self) -> None:
         device = self._device_map.get(self.device_var.get(), None)
-        cfg = {
-            "device": device,
-            "scan_interval": config.get_scan_interval(self.preset_var.get()),
-            "calibration": self.calib_data,
-            "calibration_complete": True,
-        }
+        
+        # Create unified settings
+        config = settings.Settings()
+        
+        # Update app settings
+        config.app.scan_preset = self.preset_var.get()
+        config.app.calibration_complete = True
+        
+        # Update audio settings
+        config.audio.device = str(device) if device is not None else None
+        config.audio.last_working_device = config.audio.device
+        
+        # Update calibration settings from calibration data
+        if self.calib_data is not None:
+            config.calibration.upper_offset = self.calib_data["upper_offset"]
+            config.calibration.lower_offset = self.calib_data["lower_offset"]
+            config.calibration.samplerate = self.calib_data["samplerate"]
+            config.calibration.blocksize = self.calib_data["blocksize"]
+            config.calibration.debounce_ms = self.calib_data["debounce_ms"]
+        
         try:
-            config.save(cfg)
-            if self.calib_data is not None:
-                calib_cfg = calibration.DetectorConfig(
-                    upper_offset=self.calib_data["upper_offset"],
-                    lower_offset=self.calib_data["lower_offset"],
-                    samplerate=self.calib_data["samplerate"],
-                    blocksize=self.calib_data["blocksize"],
-                    debounce_ms=self.calib_data["debounce_ms"],
-                    device=str(device) if device is not None else None,
-                )
-                calibration.save_config(calib_cfg)
+            settings.save(config)
         except Exception as exc:  # pragma: no cover - filesystem errors
             messagebox.showerror("Error", str(exc), parent=self)
         self.grab_release()

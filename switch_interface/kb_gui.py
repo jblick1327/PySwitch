@@ -6,7 +6,7 @@ from types import SimpleNamespace
 from typing import Callable
 import logging
 
-from . import config
+from . import settings
 from .kb_layout import Key, Keyboard
 from .key_types import Action
 from .modifier_state import ModifierState
@@ -43,7 +43,7 @@ class VirtualKeyboard:
         self.row_indices: list[int] = []
         self.current_word: str = ""
 
-        self.cfg = config.load()
+        self.cfg = settings.load()
 
         self.root = tk.Tk()
         self.root.title("Virtual Keyboard")
@@ -257,8 +257,8 @@ class VirtualKeyboard:
             self.root.attributes("-topmost", flag)
         except tk.TclError as e:
             logging.warning("VirtualKeyboard feature unavailable: %s", e)
-        self.cfg["always_on_top"] = flag
-        config.save(self.cfg)
+        # Note: always_on_top setting would go in app settings if needed
+        # For now, just skip saving this UI state
 
     def _update_highlight(self):
         for idx, (widget, key) in enumerate(self.key_widgets):
