@@ -201,7 +201,7 @@ class ErrorHandler:
                 "Solutions to try:\n"
                 "• The application will use default settings\n"
                 "• You can reconfigure your preferences in the launcher\n"
-                "• If problems persist, try deleting the config folder\n\n"
+                "• If problems persist, try deleting the settings folder\n\n"
                 f"Technical details: {str(error)}"
             )
         

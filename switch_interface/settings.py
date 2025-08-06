@@ -81,31 +81,38 @@ class Settings:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> Settings:
-        """Create Settings from dictionary."""
+        """Create Settings from dictionary with type validation."""
         app_data = data.get("app", {})
         calibration_data = data.get("calibration", {})
         audio_data = data.get("audio", {})
 
+        def safe_get(d: dict, key: str, default, expected_type):
+            """Safely get value with type checking."""
+            value = d.get(key, default)
+            if not isinstance(value, expected_type):
+                return default
+            return value
+
         return cls(
             app=AppSettings(
-                scan_interval=app_data.get("scan_interval", 0.6),
-                layout=app_data.get("layout", "qwerty_full.json"),
-                row_column_scan=app_data.get("row_column_scan", False),
-                calibration_complete=app_data.get("calibration_complete", False),
-                fallback_mode=app_data.get("fallback_mode", False),
-                scan_preset=app_data.get("scan_preset", "medium"),
+                scan_interval=safe_get(app_data, "scan_interval", 0.6, (int, float)),
+                layout=safe_get(app_data, "layout", "qwerty_full.json", str),
+                row_column_scan=safe_get(app_data, "row_column_scan", False, bool),
+                calibration_complete=safe_get(app_data, "calibration_complete", False, bool),
+                fallback_mode=safe_get(app_data, "fallback_mode", False, bool),
+                scan_preset=safe_get(app_data, "scan_preset", "medium", str),
             ),
             calibration=CalibrationSettings(
-                upper_offset=calibration_data.get("upper_offset", -0.2),
-                lower_offset=calibration_data.get("lower_offset", -0.5),
-                samplerate=calibration_data.get("samplerate", 44_100),
-                blocksize=calibration_data.get("blocksize", 256),
-                debounce_ms=calibration_data.get("debounce_ms", 40),
+                upper_offset=safe_get(calibration_data, "upper_offset", -0.2, (int, float)),
+                lower_offset=safe_get(calibration_data, "lower_offset", -0.5, (int, float)),
+                samplerate=safe_get(calibration_data, "samplerate", 44_100, int),
+                blocksize=safe_get(calibration_data, "blocksize", 256, int),
+                debounce_ms=safe_get(calibration_data, "debounce_ms", 40, int),
             ),
             audio=AudioSettings(
-                device=audio_data.get("device"),
-                last_working_device=audio_data.get("last_working_device"),
-                device_mode=audio_data.get("device_mode", "auto"),
+                device=audio_data.get("device") if isinstance(audio_data.get("device"), (str, type(None))) else None,
+                last_working_device=audio_data.get("last_working_device") if isinstance(audio_data.get("last_working_device"), (str, type(None))) else None,
+                device_mode=safe_get(audio_data, "device_mode", "auto", str),
             ),
         )
 
@@ -136,7 +143,7 @@ def load() -> Settings:
 
 def save(settings: Settings) -> None:
     """Save settings to file."""
-    CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+    CONFIG_FILE.parent.mkdir(parents=True, exist_ok=True)
     with open(CONFIG_FILE, "w", encoding="utf-8") as f:
         json.dump(settings.to_dict(), f, indent=2)
 
