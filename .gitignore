@@ -40,3 +40,7 @@ coverage.xml
 # OS/user-specific files
 .DS_Store
 Thumbs.db
+
+# Claude Code and Kiro artifacts
+.claude/
+.kiro/
