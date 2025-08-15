@@ -3,17 +3,18 @@ from __future__ import annotations
 
 import logging
 import math
+import threading
 import time
 from typing import Callable, Optional, Tuple
 
 import numpy as np
 
 from .audio.stream import open_input
-from .audio_device_manager import AudioDeviceManager
+from .audio_device_manager import AudioDeviceManager, AudioDeviceMode
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["listen", "check_device", "check_device_with_fallback"]
+__all__ = ["listen", "check_device", "check_device_with_fallback", "ListenerControl"]
 
 
 def check_device(*, samplerate: int = 44_100, blocksize: int = 256, device: int | str | None = None) -> None:
@@ -59,8 +60,26 @@ def check_device_with_fallback(
     if mode not in valid_modes:
         mode = "auto"
     
+    # Cast to proper type
+    device_mode: AudioDeviceMode = mode  # type: ignore
+    
     manager = AudioDeviceManager()
-    return manager.find_working_device(device, samplerate, blocksize, mode)
+    return manager.find_working_device(device, samplerate, blocksize, device_mode)
+
+
+class ListenerControl:
+    """Control object for managing audio listener lifecycle."""
+    
+    def __init__(self):
+        self.shutdown_event = threading.Event()
+    
+    def stop(self):
+        """Signal the listener to stop."""
+        self.shutdown_event.set()
+    
+    def is_running(self) -> bool:
+        """Check if listener should continue running."""
+        return not self.shutdown_event.is_set()
 
 
 def listen(
@@ -74,6 +93,7 @@ def listen(
     device: Optional[int | str] = None,
     enable_fallback: bool = True,
     device_mode: str = "auto",
+    control: Optional[ListenerControl] = None,
 ) -> None:
     """Block while monitoring the input stream for switch presses.
     
@@ -87,6 +107,7 @@ def listen(
         device: Audio device ID or name (None for system default)
         enable_fallback: Whether to enable automatic device fallback
         device_mode: Audio device mode ("exclusive", "shared", or "auto")
+        control: Optional control object for stopping the listener
     """
     from .detection import EdgeState, detect_edges
     from .audio_device_manager import AudioDeviceManager, AudioDeviceMode
@@ -100,6 +121,10 @@ def listen(
     if device_mode not in valid_modes:
         device_mode = "auto"
 
+    # Create control object if not provided
+    if control is None:
+        control = ListenerControl()
+    
     refractory_samples = int(math.ceil((debounce_ms / 1_000) * samplerate))
     state = EdgeState(armed=True, cooldown=0)
 
@@ -128,6 +153,13 @@ def listen(
             if extra_settings:
                 extra_kwargs["extra_settings"] = extra_settings
         
+        def _keyboard_interrupt_handler(signum, frame):
+            control.stop()
+        
+        # Set up signal handler for clean shutdown
+        import signal
+        signal.signal(signal.SIGINT, _keyboard_interrupt_handler)
+        
         with open_input(
             samplerate=samplerate,
             blocksize=blocksize,
@@ -138,16 +170,21 @@ def listen(
             **extra_kwargs
         ):
             try:
-                while True:
-                    time.sleep(0.1)
+                # Wait for shutdown event instead of busy-waiting
+                control.shutdown_event.wait()
             except KeyboardInterrupt:
-                return
+                control.stop()
+            finally:
+                # Restore default signal handler
+                signal.signal(signal.SIGINT, signal.SIG_DFL)
 
     # Try with fallback if enabled
     if enable_fallback:
         manager = AudioDeviceManager()
+        # Cast device_mode to proper type
+        mode: AudioDeviceMode = device_mode  # type: ignore
         working_device, error, working_mode = manager.find_working_device(
-            device, samplerate, blocksize, device_mode
+            device, samplerate, blocksize, mode
         )
         
         if working_device is not None and working_mode is not None:

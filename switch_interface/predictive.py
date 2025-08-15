@@ -15,8 +15,8 @@ from typing import TYPE_CHECKING
 class Predictor:
     """Generate common word and letter suggestions."""
 
-    def __init__(self, words: list[str] | None = None) -> None:
-        self.words = words or top_n_list("en", 80_000)
+    def __init__(self, words: list[str] | None = None, max_words: int = 10_000) -> None:
+        self.words = words or top_n_list("en", max_words)
         self.fallback_starts = Counter(w[0] for w in self.words if w and w[0].isalpha())
         self.start_letters: CounterType[str] | None = None
         self.bigrams: DefaultDict[str, CounterType[str]] | None = None
@@ -88,7 +88,7 @@ class Predictor:
         return [c for c, _ in counts.most_common(k)]
 
     # ───────── public API ─────────────────────────────────────────────────
-    @lru_cache(maxsize=2048)
+    @lru_cache(maxsize=512)
     def suggest_words(self, prefix: str, k: int = 3) -> list[str]:
         """Return up to ``k`` common words starting with ``prefix``."""
         self._ensure_thread()
@@ -107,7 +107,7 @@ class Predictor:
 
         return self._suggest_letters_cached(prefix, k)
 
-    @lru_cache(maxsize=2048)
+    @lru_cache(maxsize=512)
     def _suggest_letters_cached(self, prefix: str, k: int = 3) -> list[str]:
         """Cached implementation for suggesting letters once data is ready."""
         # ``_ensure_thread`` and readiness checks happen in ``suggest_letters``.
@@ -126,14 +126,35 @@ class Predictor:
         return [letter for letter, _ in source.most_common(k)]
 
 
-_default_predictor: Predictor | None = None
+class PredictorManager:
+    """Thread-safe singleton manager for the default predictor."""
+    
+    _instance: PredictorManager | None = None
+    _lock = threading.Lock()
+    
+    def __new__(cls) -> PredictorManager:
+        if cls._instance is None:
+            with cls._lock:
+                if cls._instance is None:
+                    cls._instance = super().__new__(cls)
+                    cls._instance._predictor = None
+                    cls._instance._predictor_lock = threading.Lock()
+        return cls._instance
+    
+    def get_predictor(self) -> Predictor:
+        """Get the default predictor instance in a thread-safe manner."""
+        with self._predictor_lock:
+            if self._predictor is None:
+                self._predictor = Predictor()
+            return self._predictor
+
+
+_predictor_manager = PredictorManager()
 
 
 def _get_default_predictor() -> Predictor:
-    global _default_predictor
-    if _default_predictor is None:
-        _default_predictor = Predictor()
-    return _default_predictor
+    """Get the default predictor instance."""
+    return _predictor_manager.get_predictor()
 
 
 def suggest_words(prefix: str, k: int = 3) -> list[str]:
