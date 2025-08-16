@@ -1,5 +1,6 @@
 from enum import Enum, auto
 
+
 # Authoritative list of Actions. Any new key must be added here.
 class Action(str, Enum):
     def _generate_next_value_(name, *_):
@@ -73,7 +74,7 @@ class Action(str, Enum):
     reset_scan_row = auto()  # move scanner back to first key in row
     predict_word = auto()  # predictive text (common‑word) key placeholder
     predict_letter = auto()  # predictive text (common-letter) key placeholder
-    
+
     # Common punctuation and symbols
     period = auto()
     comma = auto()
@@ -105,7 +106,7 @@ class Action(str, Enum):
     plus = auto()
     equals = auto()
     pipe = auto()
-    
+
     # Common actions
     copy = auto()
     paste = auto()
@@ -114,11 +115,11 @@ class Action(str, Enum):
     redo = auto()
     select_all = auto()
     escape = auto()
-    
+
     # Navigation
     next_page = auto()  # Alias for page_next for clarity
     prev_page = auto()  # Alias for page_prev for clarity
-    
+
     # UI elements
     header = auto()  # Non-interactive header/label
     help = auto()  # Show help information
@@ -132,7 +133,7 @@ class Action(str, Enum):
         "next_page",
         "prev_page",
         "header",
-        "help"
+        "help",
     }
 
     def is_virtual(self) -> bool:

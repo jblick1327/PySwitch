@@ -5,11 +5,11 @@ from __future__ import annotations
 import threading
 from collections import Counter, defaultdict
 from functools import lru_cache
+from typing import TYPE_CHECKING
 from typing import Counter as CounterType
 from typing import DefaultDict
 
 from wordfreq import top_n_list
-from typing import TYPE_CHECKING
 
 
 class Predictor:
@@ -128,19 +128,21 @@ class Predictor:
 
 class PredictorManager:
     """Thread-safe singleton manager for the default predictor."""
-    
+
     _instance: PredictorManager | None = None
     _lock = threading.Lock()
-    
+
+    def __init__(self) -> None:
+        self._predictor: Predictor | None = None
+        self._predictor_lock = threading.Lock()
+
     def __new__(cls) -> PredictorManager:
         if cls._instance is None:
             with cls._lock:
                 if cls._instance is None:
                     cls._instance = super().__new__(cls)
-                    cls._instance._predictor = None
-                    cls._instance._predictor_lock = threading.Lock()
         return cls._instance
-    
+
     def get_predictor(self) -> Predictor:
         """Get the default predictor instance in a thread-safe manner."""
         with self._predictor_lock:

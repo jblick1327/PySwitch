@@ -1,17 +1,15 @@
 from __future__ import annotations
 
+import logging
 import tkinter as tk
 from tkinter import font, ttk
 from types import SimpleNamespace
-from typing import Callable
-import logging
+from typing import TYPE_CHECKING, Callable
 
-from . import settings
+from . import predictive, settings
 from .kb_layout import Key, Keyboard
 from .key_types import Action
 from .modifier_state import ModifierState
-from typing import TYPE_CHECKING
-from . import predictive
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
     from .predictive import Predictor

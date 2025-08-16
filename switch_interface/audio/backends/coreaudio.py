@@ -23,10 +23,10 @@ class CoreAudioBackend(InputBackend):
     def open(
         self,
         *,
-        samplerate: int,
-        blocksize: int,
-        channels: int,
-        dtype: str,
+        samplerate: int = 48000,
+        blocksize: int = 128,
+        channels: int = 1,
+        dtype: str = "float32",
         device: int | str | None,
         callback: Callable[..., None],
         **extra_kwargs: Any,
@@ -41,8 +41,54 @@ class CoreAudioBackend(InputBackend):
         )
         kwargs.update(extra_kwargs)
 
-        stream = sd.InputStream(**kwargs)
-        stream.start()
+        # Strict preflight check
+        try:
+            sd.check_input_settings(**kwargs)
+        except Exception as exc:
+            # Retry with blocksize 256
+            if kwargs["blocksize"] == 128:
+                log.debug(
+                    "CoreAudio preflight failed with bs=128, trying bs=256: %s", exc
+                )
+                kwargs["blocksize"] = 256
+                try:
+                    sd.check_input_settings(**kwargs)
+                except Exception as exc2:
+                    log.debug(
+                        "CoreAudio preflight failed: device=%s sr=%d bs=%d dtype=%s",
+                        device,
+                        samplerate,
+                        256,
+                        dtype,
+                    )
+                    raise exc2
+            else:
+                log.debug(
+                    "CoreAudio preflight failed: device=%s sr=%d bs=%d dtype=%s",
+                    device,
+                    samplerate,
+                    blocksize,
+                    dtype,
+                )
+                raise
+
+        # Store mode for logging
+        self._last_mode = "n/a"
+
+        try:
+            stream = sd.InputStream(**kwargs)
+            stream.start()
+        except Exception as exc:
+            log.debug(
+                "CoreAudio open failed: device=%s sr=%d bs=%d dtype=%s - %s",
+                device,
+                kwargs["samplerate"],
+                kwargs["blocksize"],
+                dtype,
+                exc,
+            )
+            raise
+
         try:
             yield stream
         finally:

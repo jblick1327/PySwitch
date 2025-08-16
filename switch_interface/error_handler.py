@@ -18,6 +18,7 @@ import sounddevice as sd
 
 class ErrorCategory(Enum):
     """Categories of errors that can occur in the application."""
+
     AUDIO = "audio"
     CONFIG = "config"
     STARTUP = "startup"
@@ -29,56 +30,74 @@ class ErrorCategory(Enum):
 
 class ErrorSeverity(Enum):
     """Severity levels for errors."""
-    LOW = "low"          # Minor issues, application can continue
-    MEDIUM = "medium"    # Significant issues, some functionality affected
-    HIGH = "high"        # Major issues, core functionality affected
+
+    LOW = "low"  # Minor issues, application can continue
+    MEDIUM = "medium"  # Significant issues, some functionality affected
+    HIGH = "high"  # Major issues, core functionality affected
     CRITICAL = "critical"  # Application cannot function
 
 
 class ErrorHandler:
     """Centralized error handler with user-friendly messages and troubleshooting."""
-    
+
     def __init__(self):
         self.logger = logging.getLogger(__name__)
-        
+
     def categorize_error(self, error: Exception) -> ErrorCategory:
         """Categorize an error based on its type and context."""
         error_type = type(error).__name__
         error_msg = str(error).lower()
-        
+
         # Startup errors (check first as they're most critical)
-        if (isinstance(error, (ImportError, ModuleNotFoundError)) or
-            "startup" in error_msg or "launch" in error_msg):
+        if (
+            isinstance(error, (ImportError, ModuleNotFoundError))
+            or "startup" in error_msg
+            or "launch" in error_msg
+        ):
             return ErrorCategory.STARTUP
-            
+
         # Configuration errors (check before audio to catch config-specific file errors)
-        if (isinstance(error, (FileNotFoundError, PermissionError)) and 
-            ("config" in error_msg or ".json" in error_msg)):
+        if isinstance(error, (FileNotFoundError, PermissionError)) and (
+            "config" in error_msg or ".json" in error_msg
+        ):
             return ErrorCategory.CONFIG
-            
+
         # Layout errors (check before audio to catch layout-specific errors)
-        if ("layout" in error_msg or ("keyboard" in error_msg and "json" in error_msg)):
+        if "layout" in error_msg or ("keyboard" in error_msg and "json" in error_msg):
             return ErrorCategory.LAYOUT
-            
+
         # Calibration errors (check before audio to catch calibration-specific errors)
-        if ("calibration" in error_msg or "detector" in error_msg or
-            "threshold" in error_msg):
+        if (
+            "calibration" in error_msg
+            or "detector" in error_msg
+            or "threshold" in error_msg
+        ):
             return ErrorCategory.CALIBRATION
-            
+
         # Hardware errors (check before audio to catch hardware-specific errors)
-        if ("hardware" in error_msg or ("connection" in error_msg and "usb" in error_msg) or
-            ("usb" in error_msg and "device" not in error_msg)):
+        if (
+            "hardware" in error_msg
+            or ("connection" in error_msg and "usb" in error_msg)
+            or ("usb" in error_msg and "device" not in error_msg)
+        ):
             return ErrorCategory.HARDWARE
-            
+
         # Audio-related errors (broader check, but after more specific categories)
-        if (isinstance(error, (sd.PortAudioError, OSError)) or 
-            "audio" in error_msg or "microphone" in error_msg or 
-            "portaudio" in error_msg or "sounddevice" in error_msg or
-            ("device" in error_msg and any(word in error_msg for word in ["sound", "input", "record"]))):
+        if (
+            isinstance(error, (sd.PortAudioError, OSError))
+            or "audio" in error_msg
+            or "microphone" in error_msg
+            or "portaudio" in error_msg
+            or "sounddevice" in error_msg
+            or (
+                "device" in error_msg
+                and any(word in error_msg for word in ["sound", "input", "record"])
+            )
+        ):
             return ErrorCategory.AUDIO
-            
+
         return ErrorCategory.UNKNOWN
-    
+
     def get_severity(self, error: Exception, category: ErrorCategory) -> ErrorSeverity:
         """Determine the severity of an error."""
         if category == ErrorCategory.STARTUP:
@@ -94,10 +113,12 @@ class ErrorHandler:
             return ErrorSeverity.HIGH
         else:
             return ErrorSeverity.MEDIUM
-    
-    def generate_user_message(self, error: Exception, category: ErrorCategory) -> Tuple[str, str]:
+
+    def generate_user_message(
+        self, error: Exception, category: ErrorCategory
+    ) -> Tuple[str, str]:
         """Generate user-friendly error message and troubleshooting suggestions.
-        
+
         Returns:
             Tuple of (title, detailed_message)
         """
@@ -115,13 +136,13 @@ class ErrorHandler:
             return self._handle_hardware_error(error)
         else:
             return self._handle_unknown_error(error)
-    
+
     def _handle_audio_error(self, error: Exception) -> Tuple[str, str]:
         """Handle audio-related errors."""
         title = "Audio Device Error"
-        
+
         error_msg = str(error).lower()
-        
+
         if "no device" in error_msg or "device not found" in error_msg:
             message = (
                 "No microphone or audio input device was detected.\n\n"
@@ -165,16 +186,16 @@ class ErrorHandler:
                 "• Try a different microphone if available\n\n"
                 f"Technical details: {str(error)}"
             )
-        
+
         return title, message
-    
+
     def _handle_config_error(self, error: Exception) -> Tuple[str, str]:
         """Handle configuration-related errors."""
         title = "Configuration Error"
-        
+
         error_msg = str(error).lower()
         error_type = type(error).__name__
-        
+
         if isinstance(error, PermissionError) or "permission" in error_msg:
             message = (
                 "Could not save or load configuration settings.\n\n"
@@ -204,17 +225,21 @@ class ErrorHandler:
                 "• If problems persist, try deleting the settings folder\n\n"
                 f"Technical details: {str(error)}"
             )
-        
+
         return title, message
-    
+
     def _handle_startup_error(self, error: Exception) -> Tuple[str, str]:
         """Handle startup-related errors."""
         title = "Startup Error"
-        
+
         error_msg = str(error).lower()
         error_type = type(error).__name__
-        
-        if isinstance(error, (ImportError, ModuleNotFoundError)) or "module" in error_msg or "import" in error_msg:
+
+        if (
+            isinstance(error, (ImportError, ModuleNotFoundError))
+            or "module" in error_msg
+            or "import" in error_msg
+        ):
             message = (
                 "A required component could not be loaded.\n\n"
                 "This usually means the application was not installed correctly.\n\n"
@@ -245,15 +270,15 @@ class ErrorHandler:
                 "• Check the log file for more details\n\n"
                 f"Technical details: {str(error)}"
             )
-        
+
         return title, message
-    
+
     def _handle_layout_error(self, error: Exception) -> Tuple[str, str]:
         """Handle layout-related errors."""
         title = "Keyboard Layout Error"
-        
+
         error_msg = str(error).lower()
-        
+
         if "not found" in error_msg or "filenotfound" in error_msg:
             message = (
                 "The selected keyboard layout could not be found.\n\n"
@@ -284,13 +309,13 @@ class ErrorHandler:
                 "• Reinstall if problems persist\n\n"
                 f"Technical details: {str(error)}"
             )
-        
+
         return title, message
-    
+
     def _handle_calibration_error(self, error: Exception) -> Tuple[str, str]:
         """Handle calibration-related errors."""
         title = "Calibration Error"
-        
+
         message = (
             "There was a problem with the calibration process.\n\n"
             "Solutions to try:\n"
@@ -301,13 +326,13 @@ class ErrorHandler:
             "• Try moving closer to your microphone\n\n"
             "You can skip calibration and adjust settings later if needed."
         )
-        
+
         return title, message
-    
+
     def _handle_hardware_error(self, error: Exception) -> Tuple[str, str]:
         """Handle hardware-related errors."""
         title = "Hardware Error"
-        
+
         message = (
             "There was a problem with your hardware setup.\n\n"
             "Solutions to try:\n"
@@ -318,13 +343,13 @@ class ErrorHandler:
             "• Check device manager for hardware issues\n\n"
             "Contact technical support if problems persist."
         )
-        
+
         return title, message
-    
+
     def _handle_unknown_error(self, error: Exception) -> Tuple[str, str]:
         """Handle unknown or unexpected errors."""
         title = "Unexpected Error"
-        
+
         message = (
             "An unexpected error occurred.\n\n"
             "Solutions to try:\n"
@@ -334,23 +359,25 @@ class ErrorHandler:
             "• Contact support if the problem persists\n\n"
             f"Technical details: {str(error)}"
         )
-        
+
         return title, message
-    
-    def handle_error(self, error: Exception, context: Optional[str] = None) -> Dict[str, Any]:
+
+    def handle_error(
+        self, error: Exception, context: Optional[str] = None
+    ) -> Dict[str, Any]:
         """Main error handling method that processes an error and returns structured information.
-        
+
         Args:
             error: The exception that occurred
             context: Optional context about where the error occurred
-            
+
         Returns:
             Dictionary containing error information for display or logging
         """
         category = self.categorize_error(error)
         severity = self.get_severity(error, category)
         title, message = self.generate_user_message(error, category)
-        
+
         # Log the error with appropriate level
         log_message = f"Error in {context or 'unknown context'}: {str(error)}"
         if severity == ErrorSeverity.CRITICAL:
@@ -361,74 +388,80 @@ class ErrorHandler:
             self.logger.warning(log_message, exc_info=True)
         else:
             self.logger.info(log_message, exc_info=True)
-        
+
         return {
             "title": title,
             "message": message,
             "category": category,
             "severity": severity,
             "technical_details": str(error),
-            "traceback": traceback.format_exc() if severity in [ErrorSeverity.HIGH, ErrorSeverity.CRITICAL] else None,
+            "traceback": (
+                traceback.format_exc()
+                if severity in [ErrorSeverity.HIGH, ErrorSeverity.CRITICAL]
+                else None
+            ),
             "context": context,
-            "suggestions": self._get_recovery_suggestions(category, severity)
+            "suggestions": self._get_recovery_suggestions(category, severity),
         }
-    
-    def _get_recovery_suggestions(self, category: ErrorCategory, severity: ErrorSeverity) -> list[str]:
+
+    def _get_recovery_suggestions(
+        self, category: ErrorCategory, severity: ErrorSeverity
+    ) -> list[str]:
         """Get specific recovery suggestions based on error category and severity."""
         suggestions = []
-        
+
         if category == ErrorCategory.AUDIO:
             suggestions = [
                 "Try the 'Calibrate' button to select your microphone",
                 "Check microphone connections",
                 "Close other applications using audio",
-                "Restart the application"
+                "Restart the application",
             ]
         elif category == ErrorCategory.CONFIG:
             suggestions = [
                 "Application will use default settings",
                 "Reconfigure preferences in launcher",
-                "Check file permissions"
+                "Check file permissions",
             ]
         elif category == ErrorCategory.STARTUP:
             suggestions = [
                 "Restart the application",
                 "Run as administrator",
-                "Reinstall the application"
+                "Reinstall the application",
             ]
         elif category == ErrorCategory.LAYOUT:
             suggestions = [
                 "Try a different keyboard layout",
                 "Use default layout",
-                "Check layout file format"
+                "Check layout file format",
             ]
         elif category == ErrorCategory.CALIBRATION:
             suggestions = [
                 "Skip calibration and use defaults",
                 "Try different microphone",
-                "Check microphone is not muted"
+                "Check microphone is not muted",
             ]
         elif category == ErrorCategory.HARDWARE:
             suggestions = [
                 "Check hardware connections",
                 "Try different USB ports",
-                "Restart computer"
+                "Restart computer",
             ]
         else:
             suggestions = [
                 "Restart the application",
                 "Check log files",
-                "Contact support"
+                "Contact support",
             ]
-        
+
         # Add severity-specific suggestions
         if severity == ErrorSeverity.CRITICAL:
             suggestions.insert(0, "Application cannot continue normally")
         elif severity == ErrorSeverity.HIGH:
             suggestions.insert(0, "Core functionality may be affected")
-        
+
         return suggestions
-    
+
     def can_continue(self, category: ErrorCategory, severity: ErrorSeverity) -> bool:
         """Determine if the application can continue after this error."""
         if severity == ErrorSeverity.CRITICAL:
@@ -436,11 +469,19 @@ class ErrorHandler:
         if category == ErrorCategory.STARTUP and severity == ErrorSeverity.HIGH:
             return False
         return True
-    
-    def suggest_safe_mode(self, category: ErrorCategory, severity: ErrorSeverity) -> bool:
+
+    def suggest_safe_mode(
+        self, category: ErrorCategory, severity: ErrorSeverity
+    ) -> bool:
         """Determine if safe mode should be suggested for this error."""
-        return (severity in [ErrorSeverity.HIGH, ErrorSeverity.CRITICAL] and 
-                category in [ErrorCategory.AUDIO, ErrorCategory.HARDWARE, ErrorCategory.STARTUP])
+        return severity in [
+            ErrorSeverity.HIGH,
+            ErrorSeverity.CRITICAL,
+        ] and category in [
+            ErrorCategory.AUDIO,
+            ErrorCategory.HARDWARE,
+            ErrorCategory.STARTUP,
+        ]
 
 
 # Global error handler instance

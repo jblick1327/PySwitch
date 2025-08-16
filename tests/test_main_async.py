@@ -69,9 +69,10 @@ def test_launch_continues_when_device_check_hangs(monkeypatch, caplog):
             return False
 
     class DummyThread:
-        def __init__(self, target=None, args=None, daemon=None):
+        def __init__(self, target=None, args=None, daemon=None, kwargs=None):
             self.target = target
             self.args = args or ()
+            self.kwargs = kwargs or {}
 
         def start(self):
             pass

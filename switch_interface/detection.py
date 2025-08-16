@@ -4,6 +4,7 @@ This module contains only the signal-processing logic required to detect
 presses in a stream of audio samples.  Opening the microphone and
 handling input streams lives in :mod:`switch_interface.listener`.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -12,6 +13,7 @@ from typing import Tuple
 import numpy as np
 
 __all__ = ["EdgeState", "detect_edges"]
+
 
 @dataclass
 class EdgeState:
@@ -85,7 +87,3 @@ def detect_edges(
         ),
         press_index is not None,
     )
-
-
-
-
