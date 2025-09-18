@@ -163,12 +163,15 @@ def listen(
         def _keyboard_interrupt_handler(signum, frame):
             control.stop()
 
-        # Set up signal handler for clean shutdown
-        import signal
+        signal_module = None
+        if threading.current_thread() is threading.main_thread():
+            import signal
 
-        signal.signal(signal.SIGINT, _keyboard_interrupt_handler)
+            signal_module = signal
+            signal_module.signal(signal_module.SIGINT, _keyboard_interrupt_handler)
 
-        with open_input(
+        try:
+            with open_input(
             samplerate=samplerate,
             blocksize=blocksize,
             channels=1,
@@ -176,15 +179,15 @@ def listen(
             callback=_callback,
             device=target_device,
             **extra_kwargs,
-        ):
-            try:
-                # Wait for shutdown event instead of busy-waiting
-                control.shutdown_event.wait()
-            except KeyboardInterrupt:
-                control.stop()
-            finally:
-                # Restore default signal handler
-                signal.signal(signal.SIGINT, signal.SIG_DFL)
+            ):
+                try:
+                    # Wait for shutdown event instead of busy-waiting
+                    control.shutdown_event.wait()
+                except KeyboardInterrupt:
+                    control.stop()
+        finally:
+            if signal_module is not None:
+                signal_module.signal(signal_module.SIGINT, signal_module.SIG_DFL)
 
     # Try with fallback if enabled
     if enable_fallback:
