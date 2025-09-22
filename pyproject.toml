@@ -43,8 +43,7 @@ dev = [
 
 # ---------- Console & GUI entry points ----------
 [project.scripts]
-switch-interface = "switch_interface.launcher:main"
-switch-interface-cli = "switch_interface.__main__:keyboard_main"
+# Entry points removed pending new launcher implementation.
 
 # ---------- Pytest config (keeps repo root clean) ----------
 [tool.pytest.ini_options]
