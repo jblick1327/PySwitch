@@ -14,13 +14,6 @@ class Key:
         None  # optional per-key multiplier for keyboard scan speed
     )
 
-    def __post_init__(self):
-        if len(self.label) > 1 and self.action is None:
-            raise ValueError(
-                f"'action' is required when 'label' is multiple characters"
-                f"(got {self.label})"
-            )
-
 
 class KeyboardRow(Sequence[Key]):
     def __init__(self, keys: List[Key], *, stretch: bool = True):

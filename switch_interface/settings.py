@@ -23,7 +23,7 @@ class AppSettings:
     """Application-level settings."""
 
     scan_interval: float = 0.6
-    layout: str = "qwerty_full.json"
+    layout: str = "pred_test.json"
     row_column_scan: bool = False
     calibration_complete: bool = False
     fallback_mode: bool = False
@@ -102,7 +102,7 @@ class Settings:
         return cls(
             app=AppSettings(
                 scan_interval=safe_get(app_data, "scan_interval", 0.6, (int, float)),
-                layout=safe_get(app_data, "layout", "qwerty_full.json", str),
+                layout=safe_get(app_data, "layout", "pred_test.json", str),
                 row_column_scan=safe_get(app_data, "row_column_scan", False, bool),
                 calibration_complete=safe_get(
                     app_data, "calibration_complete", False, bool

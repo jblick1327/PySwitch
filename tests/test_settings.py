@@ -1,9 +1,5 @@
 """Tests for the unified configuration system."""
 import json
-import tempfile
-from pathlib import Path
-
-import pytest
 
 from switch_interface import settings
 
@@ -17,7 +13,7 @@ class TestSettings:
         
         # App defaults
         assert cfg.app.scan_interval == 0.6
-        assert cfg.app.layout == "qwerty_full.json"
+        assert cfg.app.layout == "pred_test.json"
         assert cfg.app.row_column_scan is False
         assert cfg.app.calibration_complete is False
         assert cfg.app.fallback_mode is False
@@ -44,7 +40,7 @@ class TestSettings:
         data = cfg.to_dict()
         
         assert data["app"]["scan_interval"] == 0.8
-        assert data["app"]["layout"] == "qwerty_full.json"
+        assert data["app"]["layout"] == "pred_test.json"
         assert data["calibration"]["upper_offset"] == -0.2
         assert data["audio"]["device"] == "test_device"
         assert data["audio"]["device_mode"] == "auto"
@@ -104,7 +100,7 @@ class TestSettings:
         cfg = settings.Settings.from_dict(data)
         
         assert cfg.app.scan_interval == 1.0
-        assert cfg.app.layout == "qwerty_full.json"  # Default
+        assert cfg.app.layout == "pred_test.json"  # Default
         assert cfg.calibration.upper_offset == -0.2  # Default
         assert cfg.audio.device is None  # Default
 
@@ -163,186 +159,178 @@ class TestScanPresets:
 class TestSettingsIO:
     """Test settings load and save functionality."""
 
-    def test_load_nonexistent_file(self):
+    def test_load_nonexistent_file(self, local_tmp_dir):
         """Test loading when settings file doesn't exist."""
-        with tempfile.TemporaryDirectory() as temp_dir:
-            # Mock CONFIG_FILE to point to temp directory
-            original_config_file = settings.CONFIG_FILE
-            settings.CONFIG_FILE = Path(temp_dir) / "nonexistent.json"
-            
-            try:
-                cfg = settings.load()
-                
-                # Should return defaults
-                assert cfg.app.scan_interval == 0.6
-                assert cfg.app.layout == "qwerty_full.json"
-                assert cfg.calibration.upper_offset == -0.2
-            finally:
-                settings.CONFIG_FILE = original_config_file
+        original_config_file = settings.CONFIG_FILE
+        settings.CONFIG_FILE = local_tmp_dir / "nonexistent.json"
 
-    def test_load_invalid_json(self):
+        try:
+            cfg = settings.load()
+
+            # Should return defaults
+            assert cfg.app.scan_interval == 0.6
+            assert cfg.app.layout == "pred_test.json"
+            assert cfg.calibration.upper_offset == -0.2
+        finally:
+            settings.CONFIG_FILE = original_config_file
+
+    def test_load_invalid_json(self, local_tmp_dir):
         """Test loading with invalid JSON."""
-        with tempfile.TemporaryDirectory() as temp_dir:
-            config_file = Path(temp_dir) / "invalid.json"
-            config_file.write_text("invalid json {")
-            
-            original_config_file = settings.CONFIG_FILE
-            settings.CONFIG_FILE = config_file
-            
-            try:
-                cfg = settings.load()
-                
-                # Should return defaults on error
-                assert cfg.app.scan_interval == 0.6
-                assert cfg.calibration.samplerate == 44_100
-            finally:
-                settings.CONFIG_FILE = original_config_file
+        config_file = local_tmp_dir / "invalid.json"
+        config_file.write_text("invalid json {")
 
-    def test_save_and_load_roundtrip(self):
+        original_config_file = settings.CONFIG_FILE
+        settings.CONFIG_FILE = config_file
+
+        try:
+            cfg = settings.load()
+
+            # Should return defaults on error
+            assert cfg.app.scan_interval == 0.6
+            assert cfg.calibration.samplerate == 44_100
+        finally:
+            settings.CONFIG_FILE = original_config_file
+
+    def test_save_and_load_roundtrip(self, local_tmp_dir):
         """Test saving and loading settings."""
-        with tempfile.TemporaryDirectory() as temp_dir:
-            config_file = Path(temp_dir) / "test_settings.json"
-            
-            original_config_file = settings.CONFIG_FILE
-            settings.CONFIG_FILE = config_file
-            
-            try:
-                # Create custom settings
-                original_cfg = settings.Settings()
-                original_cfg.app.scan_interval = 0.9
-                original_cfg.app.layout = "test.json"
-                original_cfg.app.calibration_complete = True
-                original_cfg.calibration.upper_offset = -0.1
-                original_cfg.audio.device = "test_mic"
-                
-                # Save
-                settings.save(original_cfg)
-                assert config_file.exists()
-                
-                # Load
-                loaded_cfg = settings.load()
-                
-                # Verify all values match
-                assert loaded_cfg.app.scan_interval == 0.9
-                assert loaded_cfg.app.layout == "test.json"
-                assert loaded_cfg.app.calibration_complete is True
-                assert loaded_cfg.calibration.upper_offset == -0.1
-                assert loaded_cfg.audio.device == "test_mic"
-                
-            finally:
-                settings.CONFIG_FILE = original_config_file
+        config_file = local_tmp_dir / "test_settings.json"
 
-    def test_save_creates_directory(self):
+        original_config_file = settings.CONFIG_FILE
+        settings.CONFIG_FILE = config_file
+
+        try:
+            # Create custom settings
+            original_cfg = settings.Settings()
+            original_cfg.app.scan_interval = 0.9
+            original_cfg.app.layout = "test.json"
+            original_cfg.app.calibration_complete = True
+            original_cfg.calibration.upper_offset = -0.1
+            original_cfg.audio.device = "test_mic"
+
+            # Save
+            settings.save(original_cfg)
+            assert config_file.exists()
+
+            # Load
+            loaded_cfg = settings.load()
+
+            # Verify all values match
+            assert loaded_cfg.app.scan_interval == 0.9
+            assert loaded_cfg.app.layout == "test.json"
+            assert loaded_cfg.app.calibration_complete is True
+            assert loaded_cfg.calibration.upper_offset == -0.1
+            assert loaded_cfg.audio.device == "test_mic"
+
+        finally:
+            settings.CONFIG_FILE = original_config_file
+
+    def test_save_creates_directory(self, local_tmp_dir):
         """Test that save() creates directory if it doesn't exist."""
-        with tempfile.TemporaryDirectory() as temp_dir:
-            config_file = Path(temp_dir) / "subdir" / "settings.json"
-            
-            original_config_file = settings.CONFIG_FILE
-            settings.CONFIG_FILE = config_file
-            
-            try:
-                cfg = settings.Settings()
-                settings.save(cfg)
-                
-                assert config_file.exists()
-                assert config_file.parent.exists()
-                
-            finally:
-                settings.CONFIG_FILE = original_config_file
+        config_file = local_tmp_dir / "subdir" / "settings.json"
 
-    def test_load_partial_file(self):
+        original_config_file = settings.CONFIG_FILE
+        settings.CONFIG_FILE = config_file
+
+        try:
+            cfg = settings.Settings()
+            settings.save(cfg)
+
+            assert config_file.exists()
+            assert config_file.parent.exists()
+
+        finally:
+            settings.CONFIG_FILE = original_config_file
+
+    def test_load_partial_file(self, local_tmp_dir):
         """Test loading file with only some settings."""
-        with tempfile.TemporaryDirectory() as temp_dir:
-            config_file = Path(temp_dir) / "partial.json"
-            
-            # Write partial settings
-            partial_data = {
-                "app": {"scan_interval": 1.5},
-                "calibration": {"samplerate": 22_050}
-                # Missing audio section
-            }
-            config_file.write_text(json.dumps(partial_data))
-            
-            original_config_file = settings.CONFIG_FILE
-            settings.CONFIG_FILE = config_file
-            
-            try:
-                cfg = settings.load()
-                
-                # Should have saved values
-                assert cfg.app.scan_interval == 1.5
-                assert cfg.calibration.samplerate == 22_050
-                
-                # Should have defaults for missing values
-                assert cfg.app.layout == "qwerty_full.json"
-                assert cfg.calibration.upper_offset == -0.2
-                assert cfg.audio.device is None
-                
-            finally:
-                settings.CONFIG_FILE = original_config_file
+        config_file = local_tmp_dir / "partial.json"
+
+        # Write partial settings
+        partial_data = {
+            "app": {"scan_interval": 1.5},
+            "calibration": {"samplerate": 22_050}
+            # Missing audio section
+        }
+        config_file.write_text(json.dumps(partial_data))
+
+        original_config_file = settings.CONFIG_FILE
+        settings.CONFIG_FILE = config_file
+
+        try:
+            cfg = settings.load()
+
+            # Should have saved values
+            assert cfg.app.scan_interval == 1.5
+            assert cfg.calibration.samplerate == 22_050
+
+            # Should have defaults for missing values
+            assert cfg.app.layout == "pred_test.json"
+            assert cfg.calibration.upper_offset == -0.2
+            assert cfg.audio.device is None
+
+        finally:
+            settings.CONFIG_FILE = original_config_file
 
 
 class TestBackwardCompatibility:
     """Test handling of various data formats."""
 
-    def test_load_with_extra_fields(self):
+    def test_load_with_extra_fields(self, local_tmp_dir):
         """Test loading file with extra unknown fields."""
-        with tempfile.TemporaryDirectory() as temp_dir:
-            config_file = Path(temp_dir) / "extra_fields.json"
-            
-            data = {
-                "app": {
-                    "scan_interval": 0.7,
-                    "unknown_field": "should_be_ignored"
-                },
-                "calibration": {"samplerate": 48000},
-                "audio": {"device": "mic1"},
-                "unknown_section": {"foo": "bar"}
-            }
-            config_file.write_text(json.dumps(data))
-            
-            original_config_file = settings.CONFIG_FILE
-            settings.CONFIG_FILE = config_file
-            
-            try:
-                cfg = settings.load()
-                
-                # Should load known fields correctly
-                assert cfg.app.scan_interval == 0.7
-                assert cfg.calibration.samplerate == 48000
-                assert cfg.audio.device == "mic1"
-                
-                # Unknown fields are ignored (no error)
-                
-            finally:
-                settings.CONFIG_FILE = original_config_file
+        config_file = local_tmp_dir / "extra_fields.json"
 
-    def test_load_with_wrong_types(self):
+        data = {
+            "app": {
+                "scan_interval": 0.7,
+                "unknown_field": "should_be_ignored"
+            },
+            "calibration": {"samplerate": 48000},
+            "audio": {"device": "mic1"},
+            "unknown_section": {"foo": "bar"}
+        }
+        config_file.write_text(json.dumps(data))
+
+        original_config_file = settings.CONFIG_FILE
+        settings.CONFIG_FILE = config_file
+
+        try:
+            cfg = settings.load()
+
+            # Should load known fields correctly
+            assert cfg.app.scan_interval == 0.7
+            assert cfg.calibration.samplerate == 48000
+            assert cfg.audio.device == "mic1"
+
+            # Unknown fields are ignored (no error)
+
+        finally:
+            settings.CONFIG_FILE = original_config_file
+
+    def test_load_with_wrong_types(self, local_tmp_dir):
         """Test loading with wrong data types."""
-        with tempfile.TemporaryDirectory() as temp_dir:
-            config_file = Path(temp_dir) / "wrong_types.json"
-            
-            data = {
-                "app": {
-                    "scan_interval": "not_a_number",  # Wrong type
-                    "calibration_complete": "yes"      # Should be bool
-                },
-                "calibration": {
-                    "samplerate": "44100"  # Should be int
-                }
+        config_file = local_tmp_dir / "wrong_types.json"
+
+        data = {
+            "app": {
+                "scan_interval": "not_a_number",  # Wrong type
+                "calibration_complete": "yes"      # Should be bool
+            },
+            "calibration": {
+                "samplerate": "44100"  # Should be int
             }
-            config_file.write_text(json.dumps(data))
-            
-            original_config_file = settings.CONFIG_FILE
-            settings.CONFIG_FILE = config_file
-            
-            try:
-                cfg = settings.load()
-                
-                # Should use defaults for invalid types
-                assert cfg.app.scan_interval == 0.6  # Default
-                assert cfg.app.calibration_complete is False  # Default
-                assert cfg.calibration.samplerate == 44_100  # Default
-                
-            finally:
-                settings.CONFIG_FILE = original_config_file
+        }
+        config_file.write_text(json.dumps(data))
+
+        original_config_file = settings.CONFIG_FILE
+        settings.CONFIG_FILE = config_file
+
+        try:
+            cfg = settings.load()
+
+            # Should use defaults for invalid types
+            assert cfg.app.scan_interval == 0.6  # Default
+            assert cfg.app.calibration_complete is False  # Default
+            assert cfg.calibration.samplerate == 44_100  # Default
+
+        finally:
+            settings.CONFIG_FILE = original_config_file

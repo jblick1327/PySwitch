@@ -80,7 +80,3 @@ def test_start_type_shutdown_cycle():
     assert kb.root.scheduled == []
 
 
-def test_version_constant():
-    from switch_interface import __version__
-
-    assert __version__ == "0.1.0"

@@ -11,9 +11,9 @@ def test_default_load():
     assert len(kb) > 0
 
 
-def test_load_keyboard_missing_fields(tmp_path):
+def test_load_keyboard_missing_fields(local_tmp_dir):
     bad_layout = {"pages": [{"rows": [{}]}]}
-    p = tmp_path / "bad.json"
+    p = local_tmp_dir / "bad.json"
     p.write_text(json.dumps(bad_layout))
     with pytest.raises(ValueError) as exc:
         load_keyboard(str(p))
